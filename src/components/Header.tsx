@@ -24,8 +24,8 @@ const NavLink: React.FC<NavLinkProps & { className?: string }> = ({
 
 const Header: React.FC = () => {
     return (
-        <header className="text-white py-3 px-4 fixed w-full top-0 z-50 select-none mt-2">
-            <div className="container mx-auto flex items-center justify-between">
+        <header className="text-white py-3 px-16 fixed w-full top-0 z-50 select-none mt-2">
+            <div className=" mx-auto flex items-center justify-between max-w-[1560px] ">
                 <Link href={"/"} className="flex flex-row items-center justify-center gap-3 opacity-75 hover:opacity-100 duration-200 cursor-pointer">
                     <h1 className="text-2xl font-semibold tracking-tight font-sans mr-8">
                         Survey Forge
@@ -34,6 +34,7 @@ const Header: React.FC = () => {
 
                 <nav className="space-x-8">
                     <NavLink href="/templates">Templates</NavLink>
+                    <NavLink href="/templates">Documentation</NavLink>
                     <NavLink href="/pricing">Pricing</NavLink>
                     <NavLink href="/about">About</NavLink>
                 </nav>
