@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { LucideBookOpen } from "lucide-react";
 
 export default function Home() {
     return (
@@ -79,26 +80,11 @@ export default function Home() {
                 </div>
                 <div className="flex items-center justify-center w-max h-max mt-12 z-10">
                     <div className="flex gap-4 mt-8">
-                        <div className="flex items-center justify-center  gap-4  px-6 py-2 bg-white/5 text-white/80 text-xl font-medium border border-white/25">
-                            <svg
-                                width="11"
-                                height="11"
-                                viewBox="0 0 11 11"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <rect
-                                    x="0.5"
-                                    y="0.5"
-                                    width="10"
-                                    height="10"
-                                    fill="white"
-                                    fillOpacity="0.34"
-                                />
-                            </svg>
+                        <Link href="/documentation" className="flex rounded-full items-center justify-center  gap-3  px-6 py-2 scale-y-[0.99] bg-white/5 hover:bg-white/7 text-white/80 text-xl font-medium border border-white/15 duration-300">
+                            <LucideBookOpen size={18} className="mt-0.5 opacity-75" />
                             Read Docs
-                        </div>
-                        <Link href="/app" className="group cursor-pointer flex items-center justify-center gap-3  px-6 pb-2.5 pt-2 bg-[#3f4da8] hover:bg-[#38459c] duration-300 text-white text-xl font-medium border border-[#858585]">
+                        </Link>
+                        <Link href="/dashboard" className="group rounded-full cursor-pointer flex items-center justify-center gap-3  px-6 pb-2.5 pt-2 bg-[#3f4da8] hover:bg-[#28368f] duration-300 text-white text-xl font-medium">
                             Create Survey
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"

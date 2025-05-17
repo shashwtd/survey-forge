@@ -56,13 +56,13 @@ const Header: React.FC = () => {
                             </NavLink>
                             <Link
                                 href={"/signup"}
-                                className="group flex items-center justify-center gap-2 w-max h-max px-5 pl-6 py-1.25 pb-1.5 my-1 rounded-full bg-[#3f4da8] cursor-pointer duration-200"
+                                className="group flex items-center justify-center gap-2 w-max h-max px-5 pl-6 py-1.25 pb-1.5 my-1 rounded-full bg-[#3f4da8] hover:bg-[#28368f] cursor-pointer duration-200"
                             >
                                 <span className="text-white/85 font-medium text-[17px]">
                                     Get Started
                                 </span>
                                 <LucideArrowRight
-                                    className="text-white/85 group-hover:text-white/100 transition-colors duration-200"
+                                    className="text-white/85 group-hover:text-white/100 duration-300 group-hover:translate-x-1"
                                     size={16}
                                 />
                             </Link>
