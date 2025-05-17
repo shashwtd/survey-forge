@@ -98,7 +98,7 @@ export default function Home() {
                             </svg>
                             Read Docs
                         </div>
-                        <Link href="/app" className="group cursor-pointer flex items-center justify-center gap-3  px-6 pb-2.5 pt-2 bg-[#2a4396] hover:bg-[#203681] duration-300 text-white text-xl font-medium border border-[#858585]">
+                        <Link href="/app" className="group cursor-pointer flex items-center justify-center gap-3  px-6 pb-2.5 pt-2 bg-[#3f4da8] hover:bg-[#38459c] duration-300 text-white text-xl font-medium border border-[#858585]">
                             Create Survey
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
