@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
     LucideArrowRight,
     Settings,
@@ -34,13 +34,12 @@ const authRoutes = ["/signup", "/login", "/forgot-password"];
 
 const Header: React.FC = () => {
     const pathname = usePathname();
+    const router = useRouter();
     const supabase = createClient();
     const [user, setUser] = useState<User | null>(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const isAuthPage = authRoutes.some((route) => pathname.includes(route));
-    const isDashbaordRoute = pathname.includes("/dashboard");
-
-    useEffect(() => {
+    const isDashbaordRoute = pathname.includes("/dashboard");useEffect(() => {
         const getUser = async () => {
             const {
                 data: { user },
@@ -53,14 +52,15 @@ const Header: React.FC = () => {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user ?? null);
+            router.refresh(); // Refresh the page to update auth state
         });
 
         return () => subscription.unsubscribe();
-    }, [supabase.auth]);
-
-    const handleLogout = async () => {
+    }, [supabase.auth, router]);    const handleLogout = async () => {
         await supabase.auth.signOut();
         setIsDropdownOpen(false);
+        router.refresh();
+        router.push('/');
     };
 
     return (
