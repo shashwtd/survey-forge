@@ -3,8 +3,10 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { Survey } from "@/types/survey";
+import SurveyDisplay from "@/components/SurveyDisplay";
 
-export default function ProtectedPage() {
+export default function DashboardPage() {
     const supabase = createClient();
     const router = useRouter();
 
@@ -19,11 +21,15 @@ export default function ProtectedPage() {
         };
 
         checkUser();
-    }, []);
+    }, [supabase.auth, router]);
+
     const [activeTab, setActiveTab] = useState("text");
     const [textContent, setTextContent] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [survey, setSurvey] = useState<Survey | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -60,6 +66,53 @@ export default function ProtectedPage() {
         },
         []
     );
+
+    const processFileContent = async (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                resolve(e.target?.result as string);
+            };
+            reader.onerror = (e) => {
+                reject(e);
+            };
+            reader.readAsText(file);
+        });
+    };
+
+    const handleSubmit = async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            let content = "";
+
+            if (activeTab === "text") {
+                content = textContent;
+            } else if (file) {
+                content = await processFileContent(file);
+            }
+
+            const response = await fetch("/api/survey/generate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ content }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to generate survey");
+            }
+
+            const surveyData = await response.json();
+            setSurvey(surveyData);
+        } catch (err) {
+            setError("Failed to generate survey. Please try again.");
+            console.error("Error:", err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const isSubmitDisabled = activeTab === "text" ? !textContent.trim() : !file;
 
@@ -178,16 +231,39 @@ export default function ProtectedPage() {
                     </div>
 
                     <button
-                        disabled={isSubmitDisabled}
+                        disabled={isSubmitDisabled || isLoading}
+                        onClick={handleSubmit}
                         className={`w-full inline-flex items-center justify-center rounded-md px-4 py-3 font-medium text-white focus:outline-none focus:ring-2 focus:ring-[#fff4] focus:ring-offset-2 transition-colors ${
-                            isSubmitDisabled
+                            isSubmitDisabled || isLoading
                                 ? "bg-[#3f4da8]/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#3f4da8]/50"
                                 : "bg-[#3f4da8] hover:bg-[#3f4da8]/90"
                         }`}
                     >
-                        Start Survey Generation
+                        {isLoading ? (
+                            <>
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Generating Survey...
+                            </>
+                        ) : (
+                            'Start Survey Generation'
+                        )}
                     </button>
+
+                    {error && (
+                        <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-md text-red-500">
+                            {error}
+                        </div>
+                    )}
                 </div>
+
+                {survey && (
+                    <div className="mt-8">
+                        <SurveyDisplay survey={survey} />
+                    </div>
+                )}
             </div>
         </div>
     );
