@@ -14,15 +14,19 @@ export default function Home() {
 
     useEffect(() => {
         const ctx = gsap.context(() => {
-            const tl = gsap.timeline({repeat: -1});
-            
-            tl.fromTo(gridContainerRef.current, {
-                '--gradient-position': '-50%'
-            }, {
-                '--gradient-position': '55%',
-                duration: 7,
-                ease: "slow(0.5,0.1,false)"
-            });
+            const tl = gsap.timeline({ repeat: -1 });
+
+            tl.fromTo(
+                gridContainerRef.current,
+                {
+                    "--gradient-position": "-50%",
+                },
+                {
+                    "--gradient-position": "55%",
+                    duration: 7,
+                    ease: "slow(0.5,0.1,false)",
+                }
+            );
         });
 
         return () => ctx.revert();
@@ -31,15 +35,19 @@ export default function Home() {
     return (
         <main className="w-screen h-auto bg-black flex flex-col items-center justify-center">
             <section className="w-full h-[750px] pt-12 flex flex-col items-center justify-center bg-gradient-to-b from-[#070711] to-[#0f0f14] relative overflow-hidden">
-                <div 
+                <div
                     ref={gridContainerRef}
-                    id="grid-container" 
-                    className="absolute w-screen h-auto aspect-video top-0 max-w-[1536px] opacity-15 overflow-hidden" 
-                    style={{
-                        '--gradient-position': '-100%',
-                        WebkitMaskImage: 'linear-gradient(to bottom right, #0002 0%, #0002 calc(35% + var(--gradient-position)), black calc(45% + var(--gradient-position)), #0002 calc(55% + var(--gradient-position)))',
-                        maskImage: 'linear-gradient(to bottom right, #0002 0%, #0002 calc(35% + var(--gradient-position)), black calc(45% + var(--gradient-position)), #0002 calc(55% + var(--gradient-position)))'
-                    } as React.CSSProperties}
+                    id="grid-container"
+                    className="absolute w-screen h-auto aspect-video top-0 max-w-[1536px] opacity-15 overflow-hidden"
+                    style={
+                        {
+                            "--gradient-position": "-100%",
+                            WebkitMaskImage:
+                                "linear-gradient(to bottom right, #0002 0%, #0002 calc(35% + var(--gradient-position)), black calc(45% + var(--gradient-position)), #0002 calc(55% + var(--gradient-position)))",
+                            maskImage:
+                                "linear-gradient(to bottom right, #0002 0%, #0002 calc(35% + var(--gradient-position)), black calc(45% + var(--gradient-position)), #0002 calc(55% + var(--gradient-position)))",
+                        } as React.CSSProperties
+                    }
                 >
                     <Image
                         unoptimized
@@ -48,7 +56,7 @@ export default function Home() {
                         fill
                         className="object-cover"
                         style={{
-                            objectPosition: "center -48px"
+                            objectPosition: "center -48px",
                         }}
                     />
                 </div>
@@ -116,11 +124,20 @@ export default function Home() {
                 </div>
                 <div className="flex items-center justify-center w-max h-max mt-12 z-10">
                     <div className="flex gap-4 mt-8">
-                        <Link href="/documentation" className="flex backdrop-blur-sm rounded-full items-center justify-center  gap-3  px-6 py-2 scale-y-[0.99] bg-white/5 hover:bg-white/7 text-white/80 text-xl font-medium border border-white/15 duration-300">
-                            <LucideBookOpen size={18} className="mt-0.5 opacity-75" />
+                        <Link
+                            href="/documentation"
+                            className="flex backdrop-blur-sm rounded-full items-center justify-center  gap-3  px-6 py-2 scale-y-[0.99] bg-white/5 hover:bg-white/7 text-white/80 text-xl font-medium border border-white/15 duration-300"
+                        >
+                            <LucideBookOpen
+                                size={18}
+                                className="mt-0.5 opacity-75"
+                            />
                             Read Docs
                         </Link>
-                        <Link href="/app" className="group rounded-full cursor-pointer flex items-center justify-center gap-3  px-6 pb-2.5 pt-2 bg-[#3f4da8] hover:bg-[#28368f] duration-300 text-white text-xl font-medium">
+                        <Link
+                            href="/app"
+                            className="group rounded-full cursor-pointer flex items-center justify-center gap-3  px-6 pb-2.5 pt-2 bg-[#3f4da8] hover:bg-[#28368f] duration-300 text-white text-xl font-medium"
+                        >
                             Create Survey
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"

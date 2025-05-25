@@ -129,12 +129,19 @@ export default function ProtectedPage() {
                             onDrop={handleDrop}
                         >
                             <div
-                                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
                                     isDragging
                                         ? "border-[#3f4da8] bg-[#3f4da8]/5"
                                         : "border-white/20 hover:border-white/30"
                                 }`}
+                                onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
                             >
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    accept=".pdf,.doc,.docx"
+                                    onChange={handleFileChange}
+                                />
                                 <div className="flex flex-col items-center gap-2">
                                     <div className="p-3 rounded-full bg-white/5">
                                         <svg
@@ -156,45 +163,30 @@ export default function ProtectedPage() {
                                             file.name
                                         ) : (
                                             <>
-                                                Drop your file here, or{" "}
-                                                <label className="text-[#3f4da8] cursor-pointer hover:underline">
-                                                    browse
-                                                    <input
-                                                        type="file"
-                                                        className="hidden"
-                                                        accept=".pdf,.doc,.docx"
-                                                        onChange={
-                                                            handleFileChange
-                                                        }
-                                                    />
-                                                </label>
+                                                Drop your file here, or click to browse
                                             </>
                                         )}
                                     </div>
                                     <p className="text-sm text-white/60">
                                         {file
-                                            ? `${(
-                                                  file.size /
-                                                  1024 /
-                                                  1024
-                                              ).toFixed(2)}MB`
+                                            ? `${(file.size / 1024 / 1024).toFixed(2)}MB`
                                             : "PDF, DOC, DOCX up to 10MB"}
                                     </p>
                                 </div>
                             </div>
                         </div>
-
-                        <button
-                            disabled={isSubmitDisabled}
-                            className={`w-full inline-flex items-center justify-center rounded-md px-4 py-3 font-medium text-white focus:outline-none focus:ring-2 focus:ring-[#fff4] focus:ring-offset-2 transition-colors ${
-                                isSubmitDisabled
-                                    ? "bg-[#3f4da8]/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#3f4da8]/50"
-                                    : "bg-[#3f4da8] hover:bg-[#3f4da8]/90"
-                            }`}
-                        >
-                            Start Survey Generation
-                        </button>
                     </div>
+
+                    <button
+                        disabled={isSubmitDisabled}
+                        className={`w-full inline-flex items-center justify-center rounded-md px-4 py-3 font-medium text-white focus:outline-none focus:ring-2 focus:ring-[#fff4] focus:ring-offset-2 transition-colors ${
+                            isSubmitDisabled
+                                ? "bg-[#3f4da8]/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#3f4da8]/50"
+                                : "bg-[#3f4da8] hover:bg-[#3f4da8]/90"
+                        }`}
+                    >
+                        Start Survey Generation
+                    </button>
                 </div>
             </div>
         </div>

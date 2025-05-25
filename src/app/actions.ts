@@ -53,7 +53,13 @@ export const signInAction = async (formData: FormData) => {
     return encodedRedirect("error", "/login", error.message);
   }
 
-  return redirect("/dashboard");
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (session) {
+    return redirect("/dashboard");
+  }
+  return encodedRedirect("error", "/login", "Session creation failed");
 };
 
 export const forgotPasswordAction = async (formData: FormData) => {
