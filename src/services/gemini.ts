@@ -1,12 +1,12 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize the model
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 interface SurveyQuestion {
     id: string;
     question: string;
-    type: 'multiple_choice' | 'text' | 'rating';
+    type: "multiple_choice" | "text" | "rating";
     options?: string[];
 }
 
@@ -18,7 +18,7 @@ export interface Survey {
 
 export async function generateSurvey(content: string): Promise<Survey> {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         const prompt = `Create a survey based on the following content. Return the response as a JSON object with the following structure:
         {
@@ -36,19 +36,20 @@ export async function generateSurvey(content: string): Promise<Survey> {
 
         Content: ${content}`;
 
-        const result = await model.generateContent(prompt);        const response = await result.response;
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
         const text = response.text();
-        
+
         try {
             // Remove markdown code fence if present
-            const jsonText = text.replace(/^```json\n|\n```$/g, '').trim();
+            const jsonText = text.replace(/^```json\n|\n```$/g, "").trim();
             return JSON.parse(jsonText);
         } catch (e) {
-            console.error('Failed to parse AI response:', text, e);
-            throw new Error('Failed to parse AI response');
+            console.error("Failed to parse AI response:", text, e);
+            throw new Error("Failed to parse AI response");
         }
     } catch (error) {
-        console.error('Error generating survey:', error);
+        console.error("Error generating survey:", error);
         throw error;
     }
 }
