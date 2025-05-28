@@ -69,10 +69,10 @@ const Header: React.FC = () => {
 
     return (
         <header
-            className={`text-white py-3 px-16 fixed w-full top-0 z-50 select-none ${
+            className={`text-white py-3 backdrop-blur-2xl px-16 fixed w-full top-0 z-50 select-none ${
                 isDashbaordRoute
                     ? "border-b border-white/15 bg-neutral-950"
-                    : "mt-2"
+                    : "bg-black/50"
             }`}
         >
             <div className=" mx-auto flex items-center justify-between max-w-[1560px] ">
