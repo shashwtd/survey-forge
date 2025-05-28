@@ -34,7 +34,7 @@ export default function Home() {
 
     return (
         <main className="w-screen h-auto bg-black flex flex-col items-center justify-center">
-            <section className="w-full h-[750px] pt-12 flex flex-col items-center justify-center bg-gradient-to-b from-[#070711] to-[#0f0f14] relative overflow-hidden">
+            <section className="w-full h-[750px] pt-12 flex flex-col items-center justify-center bg-black relative overflow-hidden">
                 <div
                     ref={gridContainerRef}
                     id="grid-container"
@@ -87,6 +87,32 @@ export default function Home() {
                         />
                     </div>
                 </div>
+                {/* Light beams container limited to 1440px */}
+                <div className="absolute w-full max-w-[1560px] h-full left-1/2 transform -translate-x-1/2 pointer-events-none overflow-visible">
+                    {/* Left light beam */}
+                    <div className="absolute left-48 w-max h-max overflow-visible">
+                        <Image
+                            unoptimized
+                            width={550}
+                            height={430}
+                            src="/assets/light_beam_towards_right.svg"
+                            alt="Light beam left"
+                            className="w-full h-full object-cover z-0"
+                        />
+                    </div>
+
+                    {/* Right light beam */}
+                    <div className="absolute right-48 w-max h-max overflow-visible scale-x-[-1]">
+                        <Image
+                            unoptimized
+                            width={550}
+                            height={430}
+                            src="/assets/light_beam_towards_right.svg"
+                            alt="Light beam right"
+                            className="w-full h-full object-cover z-0"
+                        />
+                    </div>
+                </div>
 
                 <div className="w-full cursor-default max-w-[1360px] flex flex-col items-center justify-center z-10">
                     <h1
@@ -126,23 +152,28 @@ export default function Home() {
                     <div className="flex gap-4 mt-8">
                         <Link
                             href="/documentation"
-                            className="flex backdrop-blur-sm rounded-full items-center justify-center  gap-3  px-6 py-2 scale-y-[0.99] bg-white/5 hover:bg-white/7 text-white/80 text-xl font-medium border border-white/15 duration-300"
+                            className="group flex backdrop-blur-sm rounded-full items-center justify-center gap-3 px-6 py-2 scale-y-[0.99] bg-white/5 hover:bg-white/10 text-white/80 hover:text-white/90 text-xl font-medium border border-white/15 transition-all duration-300 relative overflow-hidden"
                         >
+                            <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
                             <LucideBookOpen
                                 size={18}
-                                className="mt-0.5 opacity-75"
+                                className="mt-0.5 opacity-75 group-hover:opacity-100 group-hover:scale-110 transition-transform duration-300"
                             />
-                            Read Docs
+                            <span className="relative">Read Docs</span>
                         </Link>
                         <Link
                             href="/app"
-                            className="group rounded-full cursor-pointer flex items-center justify-center gap-3  px-6 pb-2.5 pt-2 bg-[#3f4da8] hover:bg-[#28368f] duration-300 text-white text-xl font-medium"
+                            className="group rounded-full cursor-pointer flex items-center justify-center gap-3 px-6 pb-2.5 pt-2 text-white text-xl font-medium shadow-lg border border-indigo-600/20 transition-all duration-300 relative overflow-hidden"
+                            style={{
+                                background: "linear-gradient(to right, #4f5db8, #2a3292)",
+                            }}
                         >
+                            <span className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-400/40 to-indigo-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
                             Create Survey
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 fill="none"
-                                className="size-5 group-hover:translate-x-1.5 mt-1 duration-200"
+                                className="size-5 group-hover:translate-x-1.5 mt-1 delay-300 duration-200"
                                 viewBox="0 0 24 24"
                             >
                                 <path
