@@ -202,7 +202,7 @@ export default function Home() {
                             Forge AI
                         </span>
                     </h1>
-                    <h4 className="text-[22px] text-white/60 font-sans max-w-[650px] mt-8 text-center">
+                    <h4 className="text-lg sm:text-xl md:text-[22px] text-white/60 font-sans max-w-[650px] mt-6 md:mt-8 text-center px-4 md:px-0">
                         Survey Forge helps generation of surveys with AI. It
                         promises ideal questions, contentful connections and
                         ease of use
@@ -359,7 +359,6 @@ export default function Home() {
                     </div>
                 </div>
             </section>
-
         </main>
     );
 }

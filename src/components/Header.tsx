@@ -163,15 +163,11 @@ const Header: React.FC = () => {
                             // THIS IS THE DASBHOARD LINK
                             <Link
                                 href={"/dashboard"}
-                                className="group flex items-center justify-center gap-2 w-max h-max px-5 pl-6 py-1.25 pb-1.5 my-1 rounded-full bg-[#424558] hover:bg-[#333544] cursor-pointer duration-200"
+                                className="group flex items-center justify-center gap-2 w-max h-max px-5 pl-6 py-1.25 pb-1.5 my-1 border border-white/15 rounded-full bg-white/5 hover:bg-white/10 cursor-pointer duration-200"
                             >
-                                <span className="text-white/85 font-medium text-[17px]">
+                                <span className="text-white/85 font-medium text-base">
                                     Dashboard
                                 </span>
-                                <LucideArrowRight
-                                    className="text-white/85 group-hover:text-white/100 duration-300 group-hover:translate-x-1"
-                                    size={16}
-                                />
                             </Link>
                         )}
                     </>
