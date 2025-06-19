@@ -8,6 +8,8 @@ import SurveyDisplay from "@/components/SurveyDisplay";
 import { Settings2, Play, Check, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
 
+type PlatformKey = 'qualtrics' | 'surveymonkey' | 'googleforms' | 'typeform';
+
 export default function DashboardPage() {
     const supabase = createClient();
     const router = useRouter();
@@ -18,13 +20,13 @@ export default function DashboardPage() {
     const [textContent, setTextContent] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [selectedPlatform, setSelectedPlatform] = useState("qualtrics");
+    const [selectedPlatform, setSelectedPlatform] = useState<PlatformKey>('googleforms');
 
-    const platforms = {
-        qualtrics: "Qualtrics",
-        surveymonkey: "SurveyMonkey",
-        googleforms: "Google Forms",
-        typeform: "Typeform"
+    const platforms: Record<PlatformKey, { name: string; available: boolean }> = {
+        qualtrics: { name: "Qualtrics", available: false },
+        surveymonkey: { name: "SurveyMonkey", available: false },
+        googleforms: { name: "Google Forms", available: true },
+        typeform: { name: "Typeform", available: false }
     };
 
     useEffect(() => {
@@ -99,7 +101,12 @@ export default function DashboardPage() {
         }
     };
 
-    const isSubmitDisabled = activeTab === "text" ? !textContent.trim() : !file;
+    const isSubmitDisabled = (activeTab === "text" ? !textContent.trim() : !file) || 
+        !platforms[selectedPlatform].available;
+
+    const handlePlatformChange = (value: string) => {
+        setSelectedPlatform(value as PlatformKey);
+    };
 
     return (
         <div className="flex-1 w-screen h-screen bg-neutral-950/50 flex flex-col gap-8 p-4 items-center">
@@ -208,7 +215,7 @@ export default function DashboardPage() {
                                 </div>
 
                                 <div className="grid sm:grid-cols-2 gap-3 mt-2">
-                                    <Select.Root value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                                    <Select.Root value={selectedPlatform} onValueChange={handlePlatformChange}>
                                         <Select.Trigger
                                             className="w-full cursor-pointer sm:w-48 flex items-center justify-between gap-2 px-4 py-3 text-white/90 bg-white/5 hover:bg-white/10 rounded-md border border-white/15 transition-colors outline-none focus:ring-2 focus:ring-[#3f4da8] data-[placeholder]:text-white/60"
                                             aria-label="Survey Platform"
@@ -216,6 +223,9 @@ export default function DashboardPage() {
                                             <div className="flex items-center gap-2">
                                                 <Settings2 size={16} className="text-white/70" />
                                                 <Select.Value />
+                                                {!platforms[selectedPlatform].available && (
+                                                    <span className="text-xs text-white/30">(coming soon)</span>
+                                                )}
                                             </div>
                                             <Select.Icon>
                                                 <ChevronDown size={16} className="text-white/70" />
@@ -224,21 +234,37 @@ export default function DashboardPage() {
 
                                         <Select.Portal>
                                             <Select.Content
-                                                className="overflow-hidden bg-[#1a1a1a] border w-48 ml-2 mb-1 border-white/15 rounded-md shadow-lg"
+                                                className="overflow-hidden bg-[#1a1a1a] border w-[280px] ml-2 mb-1 border-white/15 rounded-md shadow-lg"
                                                 position="popper"
                                                 sideOffset={4}
                                             >
                                                 <Select.Viewport>
-                                                    {Object.entries(platforms).map(([value, label]) => (
+                                                    {Object.entries(platforms).map(([value, { name, available }]) => (
                                                         <Select.Item
                                                             key={value}
                                                             value={value}
-                                                            className="flex items-center justify-between px-4 py-2.5 text-sm text-white/80 hover:bg-white/5 hover:text-white cursor-default outline-none data-[highlighted]:bg-white/5 data-[highlighted]:text-white"
+                                                            disabled={!available}
+                                                            className={`
+                                                                flex items-center justify-between px-4 py-2.5 text-sm
+                                                                ${available 
+                                                                    ? 'text-white/90 hover:bg-white/5 hover:text-white cursor-pointer' 
+                                                                    : 'text-white/40 cursor-not-allowed hover:bg-transparent'}
+                                                                outline-none data-[highlighted]:bg-white/5 data-[highlighted]:text-white
+                                                            `}
                                                         >
-                                                            <Select.ItemText>{label}</Select.ItemText>
-                                                            <Select.ItemIndicator>
-                                                                <Check size={16} className="text-white/70" />
-                                                            </Select.ItemIndicator>
+                                                            <div className="flex items-center justify-between flex-1">
+                                                                <Select.ItemText>{name}</Select.ItemText>
+                                                                {!available && (
+                                                                    <span className="text-xs text-white/30 ml-2">
+                                                                        (coming soon)
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {available && (
+                                                                <Select.ItemIndicator>
+                                                                    <Check size={16} className="text-white/70" />
+                                                                </Select.ItemIndicator>
+                                                            )}
                                                         </Select.Item>
                                                     ))}
                                                 </Select.Viewport>
