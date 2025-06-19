@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Footer() {
     return (
-        <footer className="relative bg-[#111] text-white">
+        <footer className="relative bg-[#111] mt-20 text-white overflow-hidden">
             {/* Light beam decorative elements */}
             <div className="absolute left-0 top-0 -translate-y-1/2 opacity-30">
                 <Image

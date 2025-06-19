@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Survey } from "@/types/survey";
 import SurveyDisplay from "@/components/SurveyDisplay";
+import { Settings2, Play, Check, ChevronDown } from "lucide-react";
+import * as Select from "@radix-ui/react-select";
 
 export default function DashboardPage() {
     const supabase = createClient();
@@ -16,6 +18,14 @@ export default function DashboardPage() {
     const [textContent, setTextContent] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [selectedPlatform, setSelectedPlatform] = useState("qualtrics");
+
+    const platforms = {
+        qualtrics: "Qualtrics",
+        surveymonkey: "SurveyMonkey",
+        googleforms: "Google Forms",
+        typeform: "Typeform"
+    };
 
     useEffect(() => {
         const checkUser = async () => {
@@ -109,20 +119,20 @@ export default function DashboardPage() {
                             <div className="flex gap-4 border-b border-white/10">
                                 <button
                                     onClick={() => setActiveTab("text")}
-                                    className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+                                    className={`px-4 cursor-pointer py-2 font-medium border-b-2 transition-colors ${
                                         activeTab === "text"
                                             ? "text-white border-[#3f4da8]"
-                                            : "text-white/60 hover:text-white/80 border-transparent"
+                                            : "text-white/60 hover:text-white/80 border-transparent hover:border-white/10"
                                     }`}
                                 >
                                     Text Input
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("file")}
-                                    className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+                                    className={`px-4 cursor-pointer py-2 font-medium border-b-2 transition-colors ${
                                         activeTab === "file"
                                             ? "text-white border-[#3f4da8]"
-                                            : "text-white/60 hover:text-white/80 border-transparent"
+                                            : "text-white/60 hover:text-white/80 border-transparent hover:border-white/10"
                                     }`}
                                 >
                                     File Upload
@@ -197,24 +207,67 @@ export default function DashboardPage() {
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={handleSubmit}
-                                    disabled={isSubmitDisabled || isLoading}
-                                    className={`w-full inline-flex items-center justify-center rounded-md px-4 py-3 font-medium text-white focus:outline-none focus:ring-2 focus:ring-[#fff4] focus:ring-offset-2 transition-colors ${
-                                        isSubmitDisabled || isLoading
-                                            ? "bg-[#3f4da8]/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#3f4da8]/50"
-                                            : "bg-[#3f4da8] hover:bg-[#3f4da8]/90"
-                                    }`}
-                                >
-                                    {isLoading ? (
-                                        <>
-                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2"></div>
-                                            Generating Survey...
-                                        </>
-                                    ) : (
-                                        "Start Survey Generation"
-                                    )}
-                                </button>
+                                <div className="grid sm:grid-cols-2 gap-3 mt-2">
+                                    <Select.Root value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                                        <Select.Trigger
+                                            className="w-full cursor-pointer sm:w-48 flex items-center justify-between gap-2 px-4 py-3 text-white/90 bg-white/5 hover:bg-white/10 rounded-md border border-white/15 transition-colors outline-none focus:ring-2 focus:ring-[#3f4da8] data-[placeholder]:text-white/60"
+                                            aria-label="Survey Platform"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <Settings2 size={16} className="text-white/70" />
+                                                <Select.Value />
+                                            </div>
+                                            <Select.Icon>
+                                                <ChevronDown size={16} className="text-white/70" />
+                                            </Select.Icon>
+                                        </Select.Trigger>
+
+                                        <Select.Portal>
+                                            <Select.Content
+                                                className="overflow-hidden bg-[#1a1a1a] border w-48 ml-2 mb-1 border-white/15 rounded-md shadow-lg"
+                                                position="popper"
+                                                sideOffset={4}
+                                            >
+                                                <Select.Viewport>
+                                                    {Object.entries(platforms).map(([value, label]) => (
+                                                        <Select.Item
+                                                            key={value}
+                                                            value={value}
+                                                            className="flex items-center justify-between px-4 py-2.5 text-sm text-white/80 hover:bg-white/5 hover:text-white cursor-default outline-none data-[highlighted]:bg-white/5 data-[highlighted]:text-white"
+                                                        >
+                                                            <Select.ItemText>{label}</Select.ItemText>
+                                                            <Select.ItemIndicator>
+                                                                <Check size={16} className="text-white/70" />
+                                                            </Select.ItemIndicator>
+                                                        </Select.Item>
+                                                    ))}
+                                                </Select.Viewport>
+                                            </Select.Content>
+                                        </Select.Portal>
+                                    </Select.Root>
+
+                                    <button
+                                        onClick={handleSubmit}
+                                        disabled={isSubmitDisabled || isLoading}
+                                        className={`flex-1 cursor-pointer inline-flex items-center justify-center rounded-md px-4 py-3 font-medium text-white focus:outline-none focus:ring-2 focus:ring-[#fff4] focus:ring-offset-2 transition-colors ${
+                                            isSubmitDisabled || isLoading
+                                                ? "bg-[#3f4da8]/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#3f4da8]/50"
+                                                : "bg-[#3f4da8] hover:bg-[#3f4da8]/90"
+                                        }`}
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2"></div>
+                                                Generating Survey...
+                                            </>
+                                        ) : (
+                                            <span className="flex items-center gap-2">
+                                                <Play size={16} className="text-white/90" />
+                                                Start Survey Generation
+                                            </span>
+                                        )}
+                                    </button>
+                                </div>
 
                                 {error && (
                                     <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-md text-red-400">
