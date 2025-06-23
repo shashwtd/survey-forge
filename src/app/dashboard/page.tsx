@@ -3,30 +3,36 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { Survey } from "@/types/survey";
+import { SurveyType } from "@/types/survey";
+import { optimizeSurvey } from "@/services/optimzeSurvey";
 import SurveyDisplay from "@/components/SurveyDisplay";
 import { Settings2, Play, Check, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
+import { GoogleFormsForm } from "@/types/GoogleFormSurvey";
 
-type PlatformKey = 'qualtrics' | 'surveymonkey' | 'googleforms' | 'typeform';
+// Update PlatformKey type
+type PlatformKey = 'qualtrics' | 'surveymonkey' | 'googleforms';
+type OptimizationStatus = 'idle' | 'optimizing' | 'ready' | 'error';
+type OptimizedSurvey = GoogleFormsForm | SurveyType;
 
 export default function DashboardPage() {
     const supabase = createClient();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
-    const [survey, setSurvey] = useState<Survey | null>(null);
+    const [survey, setSurvey] = useState<SurveyType | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState("text");
     const [textContent, setTextContent] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [selectedPlatform, setSelectedPlatform] = useState<PlatformKey>('googleforms');
+    const [optimizationStatus, setOptimizationStatus] = useState<OptimizationStatus>('idle');
+    const [optimizedSurvey, setOptimizedSurvey] = useState<OptimizedSurvey | null>(null);
 
     const platforms: Record<PlatformKey, { name: string; available: boolean }> = {
         qualtrics: { name: "Qualtrics", available: false },
         surveymonkey: { name: "SurveyMonkey", available: false },
-        googleforms: { name: "Google Forms", available: true },
-        typeform: { name: "Typeform", available: false }
+        googleforms: { name: "Google Forms", available: true }
     };
 
     useEffect(() => {
@@ -106,6 +112,39 @@ export default function DashboardPage() {
 
     const handlePlatformChange = (value: string) => {
         setSelectedPlatform(value as PlatformKey);
+    };
+
+    useEffect(() => {
+        async function optimizeSurveyForPlatform() {
+            if (!survey) return;
+            
+            setOptimizationStatus('optimizing');
+            try {
+                const optimized = await optimizeSurvey(survey, selectedPlatform === 'googleforms' ? 'google_forms' : selectedPlatform);
+                setOptimizedSurvey(optimized);
+                setOptimizationStatus('ready');
+            } catch (err) {
+                console.error('Optimization error:', err);
+                setOptimizationStatus('error');
+            }
+        }
+
+        optimizeSurveyForPlatform();
+    }, [survey, selectedPlatform]);
+
+    const handleImport = async () => {
+        if (!optimizedSurvey || optimizationStatus !== 'ready') return;
+        
+        try {
+            // TODO: Implement platform-specific import logic
+            if (selectedPlatform === 'googleforms') {
+                // Google Forms import logic will go here
+                console.log('Importing to Google Forms:', optimizedSurvey);
+            }
+        } catch (err) {
+            console.error('Import error:', err);
+            setError('Failed to import survey. Please try again.');
+        }
     };
 
     return (
@@ -322,7 +361,42 @@ export default function DashboardPage() {
                                 </button>
                             </div>
                         </div>
+
                         <SurveyDisplay survey={survey} />
+
+                        <div className="mt-8 p-6 bg-white/5 border border-white/10 rounded-lg">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-3 h-3 rounded-full ${
+                                        optimizationStatus === 'optimizing' ? 'bg-yellow-400 animate-pulse' :
+                                        optimizationStatus === 'ready' ? 'bg-green-400' :
+                                        optimizationStatus === 'error' ? 'bg-red-400' :
+                                        'bg-gray-400'
+                                    }`} />
+                                    <span className="text-white/80">
+                                        {optimizationStatus === 'optimizing' ? 'Optimizing for' :
+                                         optimizationStatus === 'ready' ? 'Ready to import to' :
+                                         optimizationStatus === 'error' ? 'Error optimizing for' :
+                                         'Select platform:'} {platforms[selectedPlatform].name}
+                                    </span>
+                                </div>
+                                
+                                {optimizationStatus === 'ready' && (
+                                    <button
+                                        onClick={handleImport}
+                                        className="px-4 py-2 bg-[#3f4da8] text-white rounded-md hover:bg-[#3f4da8]/90 transition-colors"
+                                    >
+                                        Import to {platforms[selectedPlatform].name}
+                                    </button>
+                                )}
+                            </div>
+
+                            {optimizationStatus === 'error' && (
+                                <p className="mt-4 text-red-400">
+                                    Failed to optimize survey for {platforms[selectedPlatform].name}. Please try again.
+                                </p>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>

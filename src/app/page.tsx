@@ -197,7 +197,7 @@ export default function Home() {
                             backgroundClip: "text",
                         }}
                     >
-                        directly with{" "}
+                        directly with
                         <span className="bg-[#A3B0FF] bg-clip-text ">
                             Forge AI
                         </span>

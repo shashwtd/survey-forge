@@ -20,33 +20,95 @@ export async function generateSurvey(content: string): Promise<Survey> {
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-        const prompt = `Create a survey based on the following content. Return the response as a JSON object with the following structure:
-        {
-            "title": "Survey title based on content",
-            "description": "Brief description of the survey",
-            "questions": [
-                {
-                    "id": "unique_id",
-                    "question": "Question text",
-                    "type": "multiple_choice" | "text" | "rating",
-                    "options": ["option1", "option2"] // only for multiple_choice
-                }
-            ]
-        }
+        const prompt = `Create a comprehensive survey based on the following content. Follow these strict guidelines:
 
-        Content: ${content}`;
+1. Return ONLY a valid JSON object, with no markdown formatting, no code blocks, and no additional text
+2. Do not include \`\`\`json or any other formatting markers
+3. Use these question types appropriately:
+   - multiple_choice: Single selection from options
+   - checkbox: Multiple selections allowed
+   - text: Short text answer
+   - paragraph: Long text answer
+   - rating: Linear scale
+   - dropdown: Single selection from dropdown
+   - date: Date input
+   - time: Time input
+   - email: Email validation
+   - number: Numeric input
+
+Use this exact JSON structure, with no formatting or additional text:
+{
+    "title": "Clear, relevant title",
+    "description": "Brief survey description",
+    "settings": {
+        "collectEmail": boolean,
+        "confirmationMessage": "Message shown after submission",
+        "allowMultipleResponses": boolean
+    },
+    "questions": [
+        {
+            "question": "Clear question text",
+            "type": "one of the question types above",
+            "required": boolean,
+            "description": "Optional helper text",
+            "options": ["option1", "option2"],
+            "settings": {
+                "allowOther": boolean,
+                "minRating": number,
+                "maxRating": number,
+                "ratingLabels": {
+                    "min": "Worst",
+                    "max": "Best"
+                },
+                "validation": {
+                    "min": number,
+                    "max": number,
+                    "pattern": "regex pattern"
+                }
+            }
+        }
+    ]
+}
+
+Content to create survey for: ${content}`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text();
+        let text = response.text();
+
+        // Clean up any potential markdown or code block formatting
+        text = text.replace(/```json\s*/, '').replace(/```\s*$/, '');
 
         try {
-            // Remove markdown code fence if present
-            const jsonText = text.replace(/^```json\n|\n```$/g, "").trim();
-            return JSON.parse(jsonText);
+            const parsedSurvey = JSON.parse(text.trim());
+            
+            // Add unique IDs to each question
+            parsedSurvey.questions = parsedSurvey.questions.map((q: SurveyQuestion, index: number) => ({
+                ...q,
+                id: `q${Date.now()}_${index}`
+            }));
+
+            // Validate required fields
+            if (!parsedSurvey.title || !parsedSurvey.description || !Array.isArray(parsedSurvey.questions)) {
+                throw new Error("Invalid survey structure");
+            }
+
+            // Validate each question
+            parsedSurvey.questions.forEach((q: SurveyQuestion) => {
+                if (!q.question || !q.type) {
+                    throw new Error("Invalid question structure");
+                }
+                // Ensure options are present for choice-based questionsa
+                if (['multiple_choice', 'checkbox', 'dropdown'].includes(q.type) && (!Array.isArray(q.options) || q.options.length === 0)) {
+                    throw new Error(`Question "${q.question}" requires options`);
+                }
+            });
+
+            return parsedSurvey;
         } catch (e) {
-            console.error("Failed to parse AI response:", text, e);
-            throw new Error("Failed to parse AI response");
+            const error = e as Error;
+            console.error("Failed to parse AI response:", text, error);
+            throw new Error(`Failed to parse AI response: ${error.message || 'Unknown error'}`);
         }
     } catch (error) {
         console.error("Error generating survey:", error);

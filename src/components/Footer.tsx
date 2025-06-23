@@ -1,9 +1,19 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+    const pathname = usePathname();
+
+    // Don't render footer on dashboard page
+    if (pathname === '/dashboard') {
+        return null;
+    }
+
     return (
-        <footer className="relative bg-[#111] mt-20 text-white overflow-hidden">
+<footer className="relative bg-[#111] mt-20 text-white overflow-hidden">
             {/* Light beam decorative elements */}
             <div className="absolute left-0 top-0 -translate-y-1/2 opacity-30">
                 <Image
