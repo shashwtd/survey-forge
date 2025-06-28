@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
         }
 
         const survey = await generateSurvey(content);
+        console.log("Generated survey:", survey);
         return NextResponse.json(survey);
     } catch (error) {
         console.error("Survey generation error:", error);

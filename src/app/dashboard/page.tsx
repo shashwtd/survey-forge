@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { SurveyType } from "@/types/survey";
 import { optimizeSurvey } from "@/services/optimzeSurvey";
@@ -9,6 +9,7 @@ import SurveyDisplay from "@/components/SurveyDisplay";
 import { Settings2, Play, Check, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
 import { GoogleFormsForm } from "@/types/GoogleFormSurvey";
+import { signInWithGoogle, getGoogleTokens } from '@/utils/google-auth';
 
 // Update PlatformKey type
 type PlatformKey = 'qualtrics' | 'surveymonkey' | 'googleforms';
@@ -18,6 +19,7 @@ type OptimizedSurvey = GoogleFormsForm | SurveyType;
 export default function DashboardPage() {
     const supabase = createClient();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
     const [survey, setSurvey] = useState<SurveyType | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -28,6 +30,8 @@ export default function DashboardPage() {
     const [selectedPlatform, setSelectedPlatform] = useState<PlatformKey>('googleforms');
     const [optimizationStatus, setOptimizationStatus] = useState<OptimizationStatus>('idle');
     const [optimizedSurvey, setOptimizedSurvey] = useState<OptimizedSurvey | null>(null);
+    const [isImporting, setIsImporting] = useState(false);
+    const [authStatus, setAuthStatus] = useState<'none' | 'success' | 'error'>('none');
 
     const platforms: Record<PlatformKey, { name: string; available: boolean }> = {
         qualtrics: { name: "Qualtrics", available: false },
@@ -44,6 +48,23 @@ export default function DashboardPage() {
         };
         checkUser();
     }, [supabase.auth, router]);
+
+    useEffect(() => {
+        // Handle auth callback params
+        const error = searchParams.get('error');
+        const success = searchParams.get('success');
+        
+        if (error) {
+            setError(
+                error === 'google_auth_failed' ? 'Google authentication failed' :
+                error === 'forms_access_denied' ? 'Access to Google Forms was denied' :
+                'Failed to connect to Google'
+            );
+            setAuthStatus('error');
+        } else if (success === 'connected') {
+            setAuthStatus('success');
+        }
+    }, [searchParams]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -132,19 +153,52 @@ export default function DashboardPage() {
         optimizeSurveyForPlatform();
     }, [survey, selectedPlatform]);
 
-    const handleImport = async () => {
+    const handleGoogleFormsImport = async () => {
         if (!optimizedSurvey || optimizationStatus !== 'ready') return;
         
         try {
-            // TODO: Implement platform-specific import logic
-            if (selectedPlatform === 'googleforms') {
-                // Google Forms import logic will go here
-                console.log('Importing to Google Forms:', optimizedSurvey);
+            setIsImporting(true);
+            setError(null);
+            
+            // Check for Google tokens first
+            const tokens = await getGoogleTokens();
+            
+            if (!tokens) {
+                // Trigger Google sign in with required scopes
+                await signInWithGoogle();
+                return;
             }
+
+            // Proceed with form import
+            const response = await fetch('/api/survey/import/google-forms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ survey: optimizedSurvey }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 403 && data.requiresAuth) {
+                    await signInWithGoogle();
+                    return;
+                }
+                throw new Error(data.error || 'Failed to import survey');
+            }
+
+            // Open the created form in new tab
+            window.open(data.url, '_blank');
+            
         } catch (err) {
             console.error('Import error:', err);
             setError('Failed to import survey. Please try again.');
+        } finally {
+            setIsImporting(false);
         }
+    };
+
+    const handleConnect = () => {
+        window.location.href = '/api/auth/google/signin';
     };
 
     return (
@@ -380,16 +434,31 @@ export default function DashboardPage() {
                                          'Select platform:'} {platforms[selectedPlatform].name}
                                     </span>
                                 </div>
-                                
-                                {optimizationStatus === 'ready' && (
-                                    <button
-                                        onClick={handleImport}
-                                        className="px-4 py-2 bg-[#3f4da8] text-white rounded-md hover:bg-[#3f4da8]/90 transition-colors"
-                                    >
-                                        Import to {platforms[selectedPlatform].name}
-                                    </button>
-                                )}
                             </div>
+
+                            {optimizationStatus === 'ready' && (
+                                <div className="mt-4">
+                                    {authStatus === 'success' ? (
+                                        <button
+                                            onClick={handleGoogleFormsImport}
+                                            disabled={isImporting}
+                                            className="px-4 py-2 bg-[#3f4da8] text-white rounded-md hover:bg-[#3f4da8]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {isImporting ? 'Importing...' : `Import to ${platforms[selectedPlatform].name}`}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleConnect}
+                                            className="px-4 py-2 bg-[#3f4da8] text-white rounded-md hover:bg-[#3f4da8]/90 transition-colors"
+                                        >
+                                            Connect Google Account
+                                        </button>
+                                    )}
+                                    {authStatus === 'error' && error && (
+                                        <p className="mt-2 text-sm text-red-400">{error}</p>
+                                    )}
+                                </div>
+                            )}
 
                             {optimizationStatus === 'error' && (
                                 <p className="mt-4 text-red-400">
