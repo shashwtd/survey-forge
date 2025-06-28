@@ -3,16 +3,49 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // Initialize the model
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
+export type QuestionType = 
+    | "multiple_choice"
+    | "checkbox"
+    | "text"
+    | "paragraph"
+    | "rating"
+    | "dropdown"
+    | "date"
+    | "time"
+    | "email"
+    | "number";
+
 interface SurveyQuestion {
     id: string;
     question: string;
-    type: "multiple_choice" | "text" | "rating";
+    type: QuestionType;
+    required: boolean;
+    description?: string;
     options?: string[];
+    settings?: {
+        allowOther?: boolean;
+        minRating?: number;
+        maxRating?: number;
+        ratingLabels?: {
+            min: string;
+            max: string;
+        };
+        validation?: {
+            min?: number;
+            max?: number;
+            pattern?: string;
+        };
+    };
 }
 
 export interface Survey {
     title: string;
     description: string;
+    settings: {
+        collectEmail: boolean;
+        confirmationMessage: string;
+        allowMultipleResponses: boolean;
+    };
     questions: SurveyQuestion[];
 }
 
@@ -24,13 +57,15 @@ export async function generateSurvey(content: string): Promise<Survey> {
 
 1. Return ONLY a valid JSON object, with no markdown formatting, no code blocks, and no additional text
 2. Do not include \`\`\`json or any other formatting markers
-3. Use these question types appropriately:
+3. For dropdown questions, always include the same options as related multiple_choice/checkbox questions
+4. Never return empty options array for multiple_choice, checkbox, or dropdown questions
+5. Use these question types appropriately:
    - multiple_choice: Single selection from options
    - checkbox: Multiple selections allowed
    - text: Short text answer
    - paragraph: Long text answer
-   - rating: Linear scale
-   - dropdown: Single selection from dropdown
+   - rating: Linear scale (1-5 by default)
+   - dropdown: Single selection from dropdown (must have options)
    - date: Date input
    - time: Time input
    - email: Email validation
@@ -51,11 +86,11 @@ Use this exact JSON structure, with no formatting or additional text:
             "type": "one of the question types above",
             "required": boolean,
             "description": "Optional helper text",
-            "options": ["option1", "option2"],
+            "options": ["option1", "option2"], // Required for multiple_choice, checkbox, dropdown
             "settings": {
-                "allowOther": boolean,
-                "minRating": number,
-                "maxRating": number,
+                "allowOther": boolean, // for multiple_choice, checkbox
+                "minRating": number, // for rating
+                "maxRating": number, // for rating
                 "ratingLabels": {
                     "min": "Worst",
                     "max": "Best"
@@ -69,6 +104,11 @@ Use this exact JSON structure, with no formatting or additional text:
         }
     ]
 }
+
+Important rules:
+1. For dropdown questions, use options from a related multiple_choice/checkbox question if they are related
+2. Never return empty options arrays
+3. Each multiple_choice, checkbox, and dropdown question must have at least 2 options
 
 Content to create survey for: ${content}`;
 
@@ -94,13 +134,33 @@ Content to create survey for: ${content}`;
             }
 
             // Validate each question
-            parsedSurvey.questions.forEach((q: SurveyQuestion) => {
+            parsedSurvey.questions.forEach((q: SurveyQuestion, index: number) => {
                 if (!q.question || !q.type) {
-                    throw new Error("Invalid question structure");
+                    throw new Error(`Invalid question structure at index ${index}`);
                 }
-                // Ensure options are present for choice-based questionsa
-                if (['multiple_choice', 'checkbox', 'dropdown'].includes(q.type) && (!Array.isArray(q.options) || q.options.length === 0)) {
-                    throw new Error(`Question "${q.question}" requires options`);
+
+                // Ensure options are present for choice-based questions
+                if (['multiple_choice', 'checkbox', 'dropdown'].includes(q.type)) {
+                    if (!Array.isArray(q.options) || q.options.length < 2) {
+                        throw new Error(`Question "${q.question}" requires at least 2 options`);
+                    }
+                }
+
+                // For dropdown questions, try to use options from related checkbox questions
+                if (q.type === 'dropdown' && (!q.options || q.options.length === 0)) {
+                    const relatedQuestion = parsedSurvey.questions
+                        .slice(0, index)
+                        .find((prev: SurveyQuestion) => 
+                            (prev.type === 'checkbox' || prev.type === 'multiple_choice') && 
+                            prev.options && 
+                            prev.options.length > 0
+                        );
+                    
+                    if (relatedQuestion && relatedQuestion.options) {
+                        q.options = [...relatedQuestion.options];
+                    } else {
+                        throw new Error(`Dropdown question "${q.question}" requires options`);
+                    }
                 }
             });
 
