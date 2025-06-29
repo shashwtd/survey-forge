@@ -202,7 +202,7 @@ export default function DashboardPage() {
     };
 
     return (
-        <div className="flex-1 w-screen h-screen bg-neutral-950/50 flex flex-col gap-8 p-4 items-center">
+        <div className="flex-1 w-screen min-h-screen bg-neutral-950/50 flex flex-col gap-8 p-4 items-center">
             <div className="flex w-full items-center justify-center flex-col max-w-5xl gap-8 mt-28">
                 {!survey ? (
                     <>
