@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { SurveyType } from "@/types/survey";
 import { optimizeSurvey } from "@/services/optimzeSurvey";
-import SurveyDisplay from "@/components/SurveyDisplay";
+import SurveyDisplay from "@/components/survey-display/SurveyDisplay";
 import { Settings2, Play, Check, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
 import { GoogleFormsForm } from "@/types/GoogleFormSurvey";
@@ -203,7 +203,7 @@ export default function DashboardPage() {
 
     return (
         <div className="flex-1 w-screen min-h-screen bg-neutral-950/50 flex flex-col gap-8 p-4 items-center">
-            <div className="flex w-full items-center justify-center flex-col max-w-5xl gap-8 mt-28">
+            <div className="flex w-full items-center justify-center flex-col max-w-4xl gap-8 mt-28">
                 {!survey ? (
                     <>
                         <div className="flex flex-col items-center gap-2">
