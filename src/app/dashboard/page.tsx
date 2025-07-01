@@ -190,6 +190,8 @@ export default function DashboardPage() {
             }
 
             setSurvey(data);
+            // Refresh the surveys list to include the newly generated survey
+            await fetchSurveys();
         } catch (err) {
             const error = err as Error;
             setError(error.message);
@@ -285,7 +287,7 @@ export default function DashboardPage() {
             />
             
             {/* Main Content Area */}
-            <main className="flex flex-col justify-center h-screen w-full overflow-auto">
+            <main className="flex flex-col h-screen w-full overflow-auto">
                 {/* Mobile Header */}
                 <div className="flex items-center lg:hidden h-16 px-4 border-b border-white/10">
                     <button
@@ -497,7 +499,10 @@ export default function DashboardPage() {
                                     <h2 className="text-2xl font-bold text-white font-instrument-sans">Generated Survey</h2>
                                     <div className="flex gap-3">
                                         <button
-                                            onClick={() => setSurvey(null)}
+                                            onClick={() => {
+                                                setSurvey(null);
+                                                fetchSurveys();
+                                            }}
                                             className="px-4 py-2 text-white/80 hover:text-white bg-white/5 hover:bg-white/10 rounded-md border border-white/10 transition-colors"
                                         >
                                             Create New
