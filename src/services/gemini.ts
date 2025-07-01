@@ -49,6 +49,17 @@ export interface Survey {
     questions: SurveyQuestion[];
 }
 
+export class GeminiServiceError extends Error {
+    constructor(
+        message: string,
+        public readonly code: string,
+        public readonly status?: number
+    ) {
+        super(message);
+        this.name = 'GeminiServiceError';
+    }
+}
+
 export async function generateSurvey(content: string): Promise<Survey> {
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -112,67 +123,120 @@ Important rules:
 
 Content to create survey for: ${content}`;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        let text = response.text();
-
-        // Clean up any potential markdown or code block formatting
-        text = text.replace(/```json\s*/, '').replace(/```\s*$/, '');
-
         try {
-            const parsedSurvey = JSON.parse(text.trim());
-            
-            // Add unique IDs to each question
-            parsedSurvey.questions = parsedSurvey.questions.map((q: SurveyQuestion, index: number) => ({
-                ...q,
-                id: `q${Date.now()}_${index}`
-            }));
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            let text = response.text();
 
-            // Validate required fields
-            if (!parsedSurvey.title || !parsedSurvey.description || !Array.isArray(parsedSurvey.questions)) {
-                throw new Error("Invalid survey structure");
-            }
+            // Clean up any potential markdown or code block formatting
+            text = text.replace(/```json\s*/, '').replace(/```\s*$/, '');
 
-            // Validate each question
-            parsedSurvey.questions.forEach((q: SurveyQuestion, index: number) => {
-                if (!q.question || !q.type) {
-                    throw new Error(`Invalid question structure at index ${index}`);
+            try {
+                const parsedSurvey = JSON.parse(text.trim());
+                
+                // Add unique IDs to each question
+                parsedSurvey.questions = parsedSurvey.questions.map((q: SurveyQuestion, index: number) => ({
+                    ...q,
+                    id: `q${Date.now()}_${index}`
+                }));
+
+                // Validate required fields
+                if (!parsedSurvey.title || !parsedSurvey.description || !Array.isArray(parsedSurvey.questions)) {
+                    throw new GeminiServiceError(
+                        "Invalid survey structure",
+                        "INVALID_RESPONSE",
+                        400
+                    );
                 }
 
-                // Ensure options are present for choice-based questions
-                if (['multiple_choice', 'checkbox', 'dropdown'].includes(q.type)) {
-                    if (!Array.isArray(q.options) || q.options.length < 2) {
-                        throw new Error(`Question "${q.question}" requires at least 2 options`);
-                    }
-                }
-
-                // For dropdown questions, try to use options from related checkbox questions
-                if (q.type === 'dropdown' && (!q.options || q.options.length === 0)) {
-                    const relatedQuestion = parsedSurvey.questions
-                        .slice(0, index)
-                        .find((prev: SurveyQuestion) => 
-                            (prev.type === 'checkbox' || prev.type === 'multiple_choice') && 
-                            prev.options && 
-                            prev.options.length > 0
+                // Validate each question
+                parsedSurvey.questions.forEach((q: SurveyQuestion, index: number) => {
+                    if (!q.question || !q.type) {
+                        throw new GeminiServiceError(
+                            `Invalid question structure at index ${index}`,
+                            "INVALID_QUESTION",
+                            400
                         );
-                    
-                    if (relatedQuestion && relatedQuestion.options) {
-                        q.options = [...relatedQuestion.options];
-                    } else {
-                        throw new Error(`Dropdown question "${q.question}" requires options`);
                     }
-                }
-            });
 
-            return parsedSurvey;
-        } catch (e) {
-            const error = e as Error;
-            console.error("Failed to parse AI response:", text, error);
-            throw new Error(`Failed to parse AI response: ${error.message || 'Unknown error'}`);
+                    // Ensure options are present for choice-based questions
+                    if (['multiple_choice', 'checkbox', 'dropdown'].includes(q.type)) {
+                        if (!Array.isArray(q.options) || q.options.length < 2) {
+                            throw new GeminiServiceError(
+                                `Question "${q.question}" requires at least 2 options`,
+                                "INVALID_OPTIONS",
+                                400
+                            );
+                        }
+                    }
+
+                    // For dropdown questions, try to use options from related checkbox questions
+                    if (q.type === 'dropdown' && (!q.options || q.options.length === 0)) {
+                        const relatedQuestion = parsedSurvey.questions
+                            .slice(0, index)
+                            .find((prev: SurveyQuestion) => 
+                                (prev.type === 'checkbox' || prev.type === 'multiple_choice') && 
+                                prev.options && 
+                                prev.options.length > 0
+                            );
+                        
+                        if (relatedQuestion && relatedQuestion.options) {
+                            q.options = [...relatedQuestion.options];
+                        } else {
+                            throw new GeminiServiceError(
+                                `Dropdown question "${q.question}" requires options`,
+                                "INVALID_OPTIONS",
+                                400
+                            );
+                        }
+                    }
+                });
+
+                return parsedSurvey;
+            } catch (e) {
+                if (e instanceof GeminiServiceError) {
+                    throw e;
+                }
+                const error = e as Error;
+                console.error("Failed to parse AI response:", text, error);
+                throw new GeminiServiceError(
+                    `Failed to parse AI response: ${error.message || 'Unknown error'}`,
+                    "PARSE_ERROR",
+                    400
+                );
+            }
+        } catch (error: unknown) {
+            if (error instanceof GeminiServiceError) {
+                throw error;
+            }
+            // Handle Gemini API specific errors
+            if (typeof error === 'object' && error && 'status' in error) {
+                if ((error as { status: number }).status === 503) {
+                    console.error('[Gemini API] Service overloaded');
+                    throw new GeminiServiceError(
+                        "The AI service is currently overloaded. Please try again in a few minutes.",
+                        "SERVICE_OVERLOADED",
+                        503
+                    );
+                }
+            }
+            console.error('[Gemini API] Generation error:', error instanceof Error ? error.message : 'Unknown error');
+            throw new GeminiServiceError(
+                error instanceof Error ? error.message : "Failed to generate survey",
+                "GENERATION_ERROR",
+                500
+            );
         }
     } catch (error) {
-        console.error("Error generating survey:", error);
-        throw error;
+        if (error instanceof GeminiServiceError) {
+            throw error;
+        }
+        console.error('[Gemini API] Unexpected error:', error);
+        throw new GeminiServiceError(
+            "An unexpected error occurred while generating the survey",
+            "UNKNOWN_ERROR",
+            500
+        );
     }
 }
 

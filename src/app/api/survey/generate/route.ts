@@ -1,4 +1,4 @@
-import { generateSurvey } from "@/services/gemini";
+import { generateSurvey, GeminiServiceError } from "@/services/gemini";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -13,12 +13,33 @@ export async function POST(request: NextRequest) {
         }
 
         const survey = await generateSurvey(content);
-        console.log("Generated survey:", survey);
         return NextResponse.json(survey);
     } catch (error) {
-        console.error("Survey generation error:", error);
+        // Log the error details for debugging
+        if (error instanceof GeminiServiceError) {
+            console.error(
+                `[Survey Generation] ${error.code} (${error.status}): ${error.message}`
+            );
+        } else {
+            console.error("[Survey Generation] Unexpected error:", error);
+        }
+
+        // Return appropriate error response to client
+        if (error instanceof GeminiServiceError) {
+            return NextResponse.json(
+                {
+                    error: error.message,
+                    code: error.code,
+                },
+                { status: error.status || 500 }
+            );
+        }
+
         return NextResponse.json(
-            { error: "Failed to generate survey" },
+            {
+                error: "An unexpected error occurred while generating the survey",
+                code: "UNKNOWN_ERROR",
+            },
             { status: 500 }
         );
     }

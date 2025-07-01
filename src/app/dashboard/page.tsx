@@ -114,15 +114,28 @@ export default function DashboardPage() {
                 body: JSON.stringify({ content }),
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                throw new Error('Failed to generate survey');
+                let errorMessage = data.error || 'Failed to generate survey';
+
+                // Add helpful messages for specific error codes
+                if (data.code === 'SERVICE_OVERLOADED') {
+                    errorMessage = 'The AI service is temporarily overloaded. Please try again in a few minutes.';
+                } else if (data.code === 'PARSE_ERROR') {
+                    errorMessage = 'The AI generated an invalid response. Please try again or rephrase your content.';
+                } else if (data.code === 'INVALID_RESPONSE' || data.code === 'INVALID_QUESTION' || data.code === 'INVALID_OPTIONS') {
+                    errorMessage = 'The generated survey was invalid. Please try again or provide more detailed content.';
+                }
+
+                throw new Error(errorMessage);
             }
 
-            const surveyData = await response.json();
-            setSurvey(surveyData);
+            setSurvey(data);
         } catch (err) {
-            setError('Failed to generate survey. Please try again.');
-            console.error('Error:', err);
+            const error = err as Error;
+            setError(error.message);
+            console.error('Error:', error);
         } finally {
             setIsLoading(false);
         }
@@ -310,7 +323,7 @@ export default function DashboardPage() {
                                 <div className="grid sm:grid-cols-2 gap-3 mt-2">
                                     <Select.Root value={selectedPlatform} onValueChange={handlePlatformChange}>
                                         <Select.Trigger
-                                            className="w-full cursor-pointer sm:w-48 flex items-center justify-between gap-2 px-4 py-3 text-white/90 bg-white/5 hover:bg-white/10 rounded-md border border-white/15 transition-colors outline-none focus:ring-2 focus:ring-[#3f4da8] data-[placeholder]:text-white/60"
+                                            className="w-full! cursor-pointer flex items-center justify-between gap-2 px-4 py-3 text-white/90 bg-white/5 hover:bg-white/10 rounded-md border border-white/15 transition-colors outline-none focus:ring-2 focus:ring-[#3f4da8] data-[placeholder]:text-white/60"
                                             aria-label="Survey Platform"
                                         >
                                             <div className="flex items-center gap-2">
