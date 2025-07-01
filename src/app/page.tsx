@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { LucideBookOpen, Trophy } from "lucide-react";
+import Header from "@/components/Header";
 import gsap from "gsap";
 import { SlowMo } from "gsap/all";
 
@@ -116,8 +117,10 @@ export default function Home() {
     }, []);
 
     return (
-        <main className="w-screen h-auto bg-black flex flex-col items-center justify-center">
-            <section className="w-full bg-[#0a0a0a] h-screen max-h-[720px] flex flex-col items-center justify-center relative overflow-hidden pt-12">
+        <>
+            <Header />
+            <main className="w-screen h-auto bg-black flex flex-col items-center justify-center">
+                <section className="w-full bg-[#0a0a0a] h-screen max-h-[720px] flex flex-col items-center justify-center relative overflow-hidden pt-12">
                 {/* Background gradient with blur */}
                 <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 via-transparent to-transparent backdrop-blur-[100px] pointer-events-none"></div>
 
@@ -361,5 +364,6 @@ export default function Home() {
             </section>
 
         </main>
+        </>
     );
 }

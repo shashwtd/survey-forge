@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Instrument_Sans } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
+
 import Footer from "@/components/Footer";
 
 const instrumentSans = Instrument_Sans({
@@ -33,7 +33,6 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${instrumentSans.variable} antialiased font-sans!`}
       >
-        <Header />
         <main>{children}</main>
         <Footer />
       </body>
