@@ -73,7 +73,7 @@ export default function Sidebar({
 
             {/* Sidebar */}
             <div className={`
-                top-0 left-0 z-[100] flex flex-col h-full w-64
+                top-0 left-0 z-[100] flex flex-col h-full min-w-64 w-64
                 bg-neutral-900/95 backdrop-blur-xl border-r border-white/10
                 transform transition-transform duration-300 ease-in-out
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -155,7 +155,9 @@ export default function Sidebar({
                                                     <DropdownMenu.Item
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            onDeleteSurvey(survey.id);
+                                                            if (window.confirm('Are you sure you want to delete this survey? This action cannot be undone.')) {
+                                                                onDeleteSurvey(survey.id);
+                                                            }
                                                         }}
                                                         className="text-sm text-red-400 hover:text-red-300 hover:bg-white/5 px-2 py-1.5 rounded-md cursor-pointer outline-none transition-colors"
                                                     >
