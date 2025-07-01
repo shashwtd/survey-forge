@@ -5,13 +5,14 @@ export async function GET(
     request: Request,
     { params }: { params: { id: string } }
 ) {
+    const { id } = await Promise.resolve(params);
     try {
         // Initialize Supabase client
         const supabase = await createClient();
 
-        // Check if user is authenticated
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        // Check if user is authenticated using getUser()
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
             return NextResponse.json(
                 { error: "Authentication required" },
                 { status: 401 }
@@ -22,7 +23,7 @@ export async function GET(
         const { data: survey, error } = await supabase
             .from('surveys')
             .select('*')
-            .eq('id', params.id)
+            .eq('id', id)
             .single();
 
         if (error) {
@@ -60,13 +61,14 @@ export async function DELETE(
     request: Request,
     { params }: { params: { id: string } }
 ) {
+    const { id } = await Promise.resolve(params);
     try {
         // Initialize Supabase client
         const supabase = await createClient();
 
-        // Check if user is authenticated
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        // Check if user is authenticated using getUser()
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
             return NextResponse.json(
                 { error: "Authentication required" },
                 { status: 401 }
@@ -77,8 +79,8 @@ export async function DELETE(
         const { error } = await supabase
             .from('surveys')
             .delete()
-            .eq('id', params.id)
-            .eq('user_id', session.user.id);
+            .eq('id', id)
+            .eq('user_id', user.id);
 
         if (error) {
             console.error('[Survey Delete] Database error:', error);
@@ -97,6 +99,98 @@ export async function DELETE(
         return NextResponse.json(
             {
                 error: "An unexpected error occurred while deleting the survey",
+                code: "UNKNOWN_ERROR",
+            },
+            { status: 500 }
+        );
+    }
+}
+
+export async function PATCH(
+    request: Request,
+    { params }: { params: { id: string } }
+) {
+    const { id } = await Promise.resolve(params);
+    try {
+        // Initialize Supabase client
+        const supabase = await createClient();
+
+        // Check if user is authenticated using getUser()
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+            return NextResponse.json(
+                { error: "Authentication required" },
+                { status: 401 }
+            );
+        }
+
+        // Get the updated data from request body
+        const body = await request.json();
+        const { title } = body;
+
+        if (!title) {
+            return NextResponse.json(
+                { error: "Title is required" },
+                { status: 400 }
+            );
+        }
+
+        // First get the current survey
+        const { data: currentSurvey, error: fetchError } = await supabase
+            .from('surveys')
+            .select('*')
+            .eq('id', id)
+            .eq('user_id', user.id)
+            .single();
+
+        if (fetchError || !currentSurvey) {
+            return NextResponse.json(
+                { error: "Survey not found" },
+                { status: 404 }
+            );
+        }
+
+        // Update survey with new title and preserve the ID
+        const updatedContent = {
+            ...currentSurvey.content,
+            id,  // Explicitly preserve the ID
+            title
+        };
+
+        // Update survey with new title (both in content and title field)
+        const { data: survey, error } = await supabase
+            .from('surveys')
+            .update({ 
+                content: updatedContent,
+                title: title, // Update the title field as well
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .eq('user_id', user.id)
+            .select('*')
+            .single();
+
+        if (error) {
+            console.error('[Survey Update] Database error:', error);
+            return NextResponse.json(
+                {
+                    error: "Failed to update survey",
+                    code: "DB_ERROR"
+                },
+                { status: 500 }
+            );
+        }
+
+        // Return the content with the ID preserved
+        return NextResponse.json({
+            ...survey,
+            content: updatedContent
+        });
+    } catch (error) {
+        console.error("[Survey Update] Unexpected error:", error);
+        return NextResponse.json(
+            {
+                error: "An unexpected error occurred while updating the survey",
                 code: "UNKNOWN_ERROR",
             },
             { status: 500 }

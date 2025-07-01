@@ -9,9 +9,9 @@ export async function POST(request: NextRequest) {
 
         // Check if user is authenticated
         const {
-            data: { session },
-        } = await supabase.auth.getSession();
-        if (!session) {
+            data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
             return NextResponse.json(
                 { error: "Authentication required" },
                 { status: 401 }
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
             .from("surveys")
             .insert([
                 {
-                    user_id: session.user.id,
+                    user_id: user.id,
                     content: survey,
                     // Generate a title from the first question or use the survey title
                     title:
