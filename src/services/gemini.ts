@@ -64,25 +64,31 @@ export async function generateSurvey(content: string): Promise<Survey> {
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-        const prompt = `Create a comprehensive survey based on the following content. Follow these strict guidelines:
+        const prompt = `Create a focused, non-repetitive survey based on the following content. Follow these strict guidelines:
 
 1. Return ONLY a valid JSON object, with no markdown formatting, no code blocks, and no additional text
 2. Do not include \`\`\`json or any other formatting markers
-3. For dropdown questions, always include the same options as related multiple_choice/checkbox questions
-4. Never return empty options array for multiple_choice, checkbox, or dropdown questions
-5. Use these question types appropriately:
-   - multiple_choice: Single selection from options
-   - checkbox: Multiple selections allowed
-   - text: Short text answer
-   - paragraph: Long text answer
-   - rating: Linear scale (1-5 by default)
-   - dropdown: Single selection from dropdown (must have options)
-   - date: Date input
-   - time: Time input
-   - email: Email validation
-   - number: Numeric input
+3. IMPORTANT: Never create duplicate questions - do not repeat the same question with different types
+4. Choose the most appropriate question type for each question - do not create both dropdown and multiple choice versions
+5. Use these question types appropriately and follow these rules:
+   - multiple_choice: Use for single selection from 2-5 options, best for opinions/ratings
+   - checkbox: Use for "select all that apply" questions with multiple possible answers
+   - dropdown: Use ONLY for single select, long lists (>5 options) like countries or categories
+   - text: Use for short, specific answers (names, titles, brief responses)
+   - paragraph: Use for detailed feedback, suggestions, or explanations
+   - rating: Use for satisfaction scores or numeric ratings (1-5 by default)
+   - date: Use only for actual date inputs (birthdays, appointments)
+   - time: Use only for actual time inputs (preferred time, scheduling)
+   - email: Use only when collecting email addresses
+   - number: Use for numeric inputs (age, quantity, etc.)
 
-Use this exact JSON structure, with no formatting or additional text:
+6. Keep surveys focused and efficient:
+   - Avoid redundant or overlapping questions
+   - Group related questions together logically
+   - Progress from general to specific questions
+   - Include a mix of question types for engagement
+
+Use this exact JSON structure:
 {
     "title": "Clear, relevant title",
     "description": "Brief survey description",
@@ -103,8 +109,8 @@ Use this exact JSON structure, with no formatting or additional text:
                 "minRating": number, // for rating
                 "maxRating": number, // for rating
                 "ratingLabels": {
-                    "min": "Worst",
-                    "max": "Best"
+                    "min": "Label for lowest rating",
+                    "max": "Label for highest rating"
                 },
                 "validation": {
                     "min": number,
@@ -116,10 +122,12 @@ Use this exact JSON structure, with no formatting or additional text:
     ]
 }
 
-Important rules:
-1. For dropdown questions, use options from a related multiple_choice/checkbox question if they are related
-2. Never return empty options arrays
-3. Each multiple_choice, checkbox, and dropdown question must have at least 2 options
+Critical Rules:
+1. DO NOT create duplicate questions with different types (e.g., no dropdown version of a multiple-choice question)
+2. Choose the most appropriate single type for each question
+3. Use dropdown ONLY for long lists of options (>5 items)
+4. Ensure each question adds unique value to the survey
+5. Keep the survey focused and efficient
 
 Content to create survey for: ${content}`;
 
