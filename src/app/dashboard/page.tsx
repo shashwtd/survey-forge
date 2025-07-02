@@ -4,33 +4,45 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import SurveyDisplay from "@/components/survey-display/SurveyDisplay";
-import Sidebar from "@/components/Sidebar";
+import Sidebar from "@/components/dashboard/Sidebar";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { useOptimization } from "@/hooks/useOptimization";
 import { useSurveyManagement } from "@/hooks/useSurveyManagement";
-import { SurveyCreator } from "@/components/SurveyCreator";
+import { SurveyCreator } from "@/components/dashboard/SurveyCreator";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import SurveySkeleton from "@/components/survey-display/SurveySkeleton";
 
 export default function DashboardPage() {
     const supabase = createClient();
     const router = useRouter();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isSelectingSurvey, setIsSelectingSurvey] = useState(false);
 
     const { 
         survey,
         savedSurveys,
         isLoading,
+        isRenamingTitle,
+        isUpdatingDescription,
         error,
         fetchSurveys,
         selectSurvey,
         createSurvey,
         renameSurvey,
+        updateDescription,
         deleteSurvey,
         clearSurvey
     } = useSurveyManagement();
 
     const { authStatus, handleGoogleAuth, handleConnect } = useGoogleAuth();
     const { status: optimizationStatus, isImporting, handleImport } = useOptimization(survey?.content ?? null, 'googleforms');
+
+    // Reset isSelectingSurvey when survey loads
+    useEffect(() => {
+        if (!isLoading && isSelectingSurvey) {
+            setIsSelectingSurvey(false);
+        }
+    }, [isLoading, isSelectingSurvey]);
 
     useEffect(() => {
         const checkUser = async () => {
@@ -43,6 +55,11 @@ export default function DashboardPage() {
         };
         checkUser();
     }, [supabase.auth, router, fetchSurveys]);
+
+    const handleSelectSurvey = async (id: string) => {
+        setIsSelectingSurvey(true);
+        await selectSurvey(id);
+    };
 
     const handleNewSurvey = () => {
         clearSurvey();
@@ -80,7 +97,7 @@ export default function DashboardPage() {
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
                 surveys={savedSurveys}
-                onSelectSurvey={selectSurvey}
+                onSelectSurvey={handleSelectSurvey}
                 onNewSurvey={handleNewSurvey}
                 onDeleteSurvey={deleteSurvey}
             />
@@ -100,18 +117,22 @@ export default function DashboardPage() {
 
                 <div className="flex-1 flex px-4">
                     <div className="max-w-4xl w-full mx-auto py-8">
-                        {!survey ? (
+                        {!survey && !isSelectingSurvey ? (
                             <SurveyCreator
                                 onSubmit={createSurvey}
                                 isLoading={isLoading}
                                 error={error}
                             />
+                        ) : isSelectingSurvey || isLoading ? (
+                            <SurveySkeleton />
                         ) : (
                             <div className="w-full">
                                 <SurveyDisplay 
-                                    survey={survey.content} 
-                                    onUpdateTitle={(newTitle) => renameSurvey(survey.id, newTitle)}
-                                    isLoading={isLoading} 
+                                    survey={survey!.content} 
+                                    onUpdateTitle={(newTitle) => survey ? renameSurvey(survey.id, newTitle) : Promise.resolve()}
+                                    onUpdateDescription={(newDescription) => survey ? updateDescription(survey.id, newDescription) : Promise.resolve()}
+                                    isRenamingTitle={isRenamingTitle}
+                                    isUpdatingDescription={isUpdatingDescription}
                                 />
                             </div>
                         )}
