@@ -21,6 +21,6 @@ export async function GET() {
         return NextResponse.redirect(authUrl);
     } catch (error) {
         console.error('Failed to generate auth URL:', error);
-        return NextResponse.redirect('/dashboard?error=auth_failed');
+        return NextResponse.redirect('/survey/create?error=auth_failed');
     }
 }

@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // List of protected routes that require authentication
-  const protectedRoutes = ['/dashboard', '/app', '/settings'];
+  const protectedRoutes = ['/survey', '/app', '/settings'];
   
   // Don't redirect if the route is not protected
   if (!protectedRoutes.some(route => pathname.startsWith(route))) {

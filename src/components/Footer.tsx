@@ -8,7 +8,7 @@ export default function Footer() {
     const pathname = usePathname();
 
     // Don't render footer on dashboard page
-    if (pathname === '/dashboard') {
+    if (pathname.startsWith('/survey')) {
         return null;
     }
 
@@ -72,7 +72,7 @@ export default function Footer() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/dashboard"
+                                        href="/survey/create"
                                         className="text-sm text-gray-400 hover:text-white"
                                     >
                                         Templates

@@ -57,7 +57,7 @@ export const signInAction = async (formData: FormData) => {
     data: { session },
   } = await supabase.auth.getSession();
   if (session) {
-    return redirect("/dashboard");
+    return redirect("/survey/create");
   }
   return encodedRedirect("error", "/login", "Session creation failed");
 };

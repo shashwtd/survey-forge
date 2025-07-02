@@ -80,7 +80,7 @@ const Header: React.FC = () => {
                 {user ? (
                     // Dasshboard link
                     <Link
-                        href={"/dashboard"}
+                        href={"/survey/create"}
                         className="group flex items-center justify-center gap-2 w-max h-max px-5 pl-6 py-1.25 pb-1.5 my-1 border border-white/15 rounded-full bg-white/5 hover:bg-white/10 cursor-pointer duration-200"
                     >
                         <span className="text-white/85 font-medium text-base">
