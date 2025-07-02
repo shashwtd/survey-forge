@@ -126,11 +126,11 @@ export async function PATCH(
 
         // Get the updated data from request body
         const body = await request.json();
-        const { title } = body;
+        const { title, description } = body;
 
-        if (!title) {
+        if (!title && !description) {
             return NextResponse.json(
-                { error: "Title is required" },
+                { error: "Title or description is required" },
                 { status: 400 }
             );
         }
@@ -150,19 +150,20 @@ export async function PATCH(
             );
         }
 
-        // Update survey with new title and preserve the ID
+        // Update survey with new title/description and preserve the ID
         const updatedContent = {
             ...currentSurvey.content,
             id,  // Explicitly preserve the ID
-            title
+            ...(title && { title }),
+            ...(description && { description })
         };
 
-        // Update survey with new title (both in content and title field)
+        // Update survey with new data
         const { data: survey, error } = await supabase
             .from('surveys')
             .update({ 
                 content: updatedContent,
-                title: title, // Update the title field as well
+                ...(title && { title }), // Only update title field if title is provided
                 updated_at: new Date().toISOString()
             })
             .eq('id', id)

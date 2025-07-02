@@ -11,11 +11,14 @@ export interface UseSurveyManagementReturn {
     survey: { id: string; content: SurveyType } | null;
     savedSurveys: SavedSurvey[];
     isLoading: boolean;
+    isRenamingTitle: boolean;
+    isUpdatingDescription: boolean;
     error: string | null;
     fetchSurveys: () => Promise<void>;
     selectSurvey: (id: string) => Promise<void>;
     createSurvey: (content: string) => Promise<void>;
     renameSurvey: (id: string, newTitle: string) => Promise<void>;
+    updateDescription: (id: string, newDescription: string) => Promise<void>;
     deleteSurvey: (id: string) => Promise<void>;
     clearSurvey: () => void;
 }
@@ -24,6 +27,8 @@ export function useSurveyManagement(): UseSurveyManagementReturn {
     const [survey, setSurvey] = useState<{ id: string; content: SurveyType } | null>(null);
     const [savedSurveys, setSavedSurveys] = useState<SavedSurvey[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isRenamingTitle, setIsRenamingTitle] = useState(false);
+    const [isUpdatingDescription, setIsUpdatingDescription] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const fetchSurveys = useCallback(async () => {
@@ -98,6 +103,7 @@ export function useSurveyManagement(): UseSurveyManagementReturn {
 
     const renameSurvey = useCallback(async (id: string, newTitle: string) => {
         setError(null);
+        setIsRenamingTitle(true);
         try {
             const response = await fetch(`/api/survey/${id}`, {
                 method: 'PATCH',
@@ -118,6 +124,36 @@ export function useSurveyManagement(): UseSurveyManagementReturn {
             console.error('Error updating survey title:', error);
             setError('Failed to update survey title');
             throw error;
+        } finally {
+            setIsRenamingTitle(false);
+        }
+    }, [survey?.id, fetchSurveys]);
+
+    const updateDescription = useCallback(async (id: string, newDescription: string) => {
+        setError(null);
+        setIsUpdatingDescription(true);
+        try {
+            const response = await fetch(`/api/survey/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: newDescription }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update survey description');
+            }
+
+            const data = await response.json();
+            if (survey?.id === id) {
+                setSurvey({ id: data.id, content: data.content });
+            }
+            await fetchSurveys();
+        } catch (error) {
+            console.error('Error updating survey description:', error);
+            setError('Failed to update survey description');
+            throw error;
+        } finally {
+            setIsUpdatingDescription(false);
         }
     }, [survey?.id, fetchSurveys]);
 
@@ -151,11 +187,14 @@ export function useSurveyManagement(): UseSurveyManagementReturn {
         survey,
         savedSurveys,
         isLoading,
+        isRenamingTitle,
+        isUpdatingDescription,
         error,
         fetchSurveys,
         selectSurvey,
         createSurvey,
         renameSurvey,
+        updateDescription,
         deleteSurvey,
         clearSurvey,
     };
