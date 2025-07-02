@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Instrument_Sans } from "next/font/google";
 import "./globals.css";
+import { SurveyProvider } from "@/context/SurveyContext";
 
 import Footer from "@/components/Footer";
 
@@ -20,7 +21,8 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: "Survey Forge — AI Survey Builder",
-  description: "Survey Forge is an AI-powered survey builder that helps you create surveys quickly and easily using AI, and allows direct imports to your desired survey platform Qualtrics or SurveyMonkey",
+  description:
+    "Survey Forge is an AI-powered survey builder that helps you create surveys quickly and easily using AI, and allows direct imports to your desired survey platform Qualtrics or SurveyMonkey",
 };
 
 export default function RootLayout({
@@ -33,8 +35,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${instrumentSans.variable} antialiased font-sans!`}
       >
-        <main>{children}</main>
-        <Footer />
+        <SurveyProvider>
+          <main>{children}</main>
+          <Footer />
+        </SurveyProvider>
       </body>
     </html>
   );

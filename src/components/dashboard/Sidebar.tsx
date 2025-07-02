@@ -5,6 +5,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from 'next/navigation';
+import { useSurveyContext } from "@/context/SurveyContext";
 
 interface SurveyHistory {
     id: string;
@@ -15,24 +16,20 @@ interface SurveyHistory {
 interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
-    surveys: SurveyHistory[];
-    onSelectSurvey: (id: string) => void;
     onNewSurvey: () => void;
-    onDeleteSurvey?: (id: string) => void;
 }
 
 export default function Sidebar({
     isOpen,
     onClose,
-    surveys,
-    onSelectSurvey,
     onNewSurvey,
-    onDeleteSurvey
 }: SidebarProps) {
     const [user, setUser] = useState<User | null>(null);
     const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
     const supabase = createClient();
     const router = useRouter();
+
+    const { savedSurveys, deleteSurvey, survey } = useSurveyContext();
 
     useEffect(() => {
         const getUser = async () => {
@@ -59,6 +56,12 @@ export default function Sidebar({
         setIsUserDropdownOpen(false);
         router.refresh();
         router.push("/");
+    };
+
+    const handleSelectSurvey = async (id: string) => {
+        if (survey?.id === id) return; // Don't do anything if it's the same survey
+        router.push(`/survey/edit/${id}`);
+        // Let the layout effect handle loading the survey
     };
 
     return (
@@ -111,11 +114,11 @@ export default function Sidebar({
                             Your Surveys
                         </div>
                         <div className="flex flex-col gap-0.5">
-                            {surveys.map((survey) => (
+                            {savedSurveys.map((survey: SurveyHistory) => (
                                 <div
                                     key={survey.id}
                                     className="group relative flex items-center px-2 py-2 text-white/80 hover:bg-white/5 rounded-md cursor-pointer transition-colors"
-                                    onClick={() => onSelectSurvey(survey.id)}
+                                    onClick={() => handleSelectSurvey(survey.id)}
                                 >
                                     {/* Survey Title */}
                                     <div className="flex-1 min-w-0">
@@ -144,26 +147,24 @@ export default function Sidebar({
                                                 <DropdownMenu.Item
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        onSelectSurvey(survey.id);
+                                                        handleSelectSurvey(survey.id);
                                                     }}
                                                     className="text-sm text-white/80 hover:text-white hover:bg-white/5 px-2 py-1.5 rounded-md cursor-pointer outline-none transition-colors"
                                                 >
                                                     Open Survey
                                                 </DropdownMenu.Item>
                                                 
-                                                {onDeleteSurvey && (
-                                                    <DropdownMenu.Item
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (window.confirm('Are you sure you want to delete this survey? This action cannot be undone.')) {
-                                                                onDeleteSurvey(survey.id);
-                                                            }
-                                                        }}
-                                                        className="text-sm text-red-400 hover:text-red-300 hover:bg-white/5 px-2 py-1.5 rounded-md cursor-pointer outline-none transition-colors"
-                                                    >
-                                                        Delete Survey
-                                                    </DropdownMenu.Item>
-                                                )}
+                                                <DropdownMenu.Item
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (window.confirm('Are you sure you want to delete this survey? This action cannot be undone.')) {
+                                                            deleteSurvey(survey.id);
+                                                        }
+                                                    }}
+                                                    className="text-sm text-red-400 hover:text-red-300 hover:bg-white/5 px-2 py-1.5 rounded-md cursor-pointer outline-none transition-colors"
+                                                >
+                                                    Delete Survey
+                                                </DropdownMenu.Item>
                                             </DropdownMenu.Content>
                                         </DropdownMenu.Portal>
                                     </DropdownMenu.Root>

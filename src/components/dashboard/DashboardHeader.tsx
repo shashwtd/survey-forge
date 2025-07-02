@@ -1,4 +1,4 @@
-import { Menu, MoreVertical } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { SurveyType } from "@/types/survey";
 
@@ -6,7 +6,6 @@ interface DashboardHeaderProps {
     survey: { id: string; content: SurveyType } | null;
     onRenameSurvey: (newTitle: string) => Promise<void>;
     onDeleteSurvey: () => void;
-    onToggleSidebar: () => void;
     isImporting: boolean;
     optimizationStatus: string;
     authStatus: string;
@@ -18,26 +17,19 @@ export default function DashboardHeader({
     survey,
     onRenameSurvey,
     onDeleteSurvey,
-    onToggleSidebar,
     isImporting,
     optimizationStatus,
     authStatus,
     onGoogleFormsImport,
     onConnect
 }: DashboardHeaderProps) {
+    const handleRenameSurvey = async (newTitle: string) => {
+        if (!survey) return;
+        onRenameSurvey(newTitle).catch(console.error);
+    }
+
     return (
         <>
-            {/* Mobile menu */}
-            <div className="flex items-center lg:hidden h-16 px-4 border-b border-zinc-800 bg-zinc-900">
-                <button
-                    onClick={onToggleSidebar}
-                    className="p-2 text-white/70 hover:text-white transition-colors"
-                >
-                    <Menu size={24} />
-                </button>
-            </div>
-
-            {/* Floating header */}
             {survey && (
                 <div className="sticky top-0 z-10 backdrop-blur-xl bg-neutral-900/95 border-b border-white/10">
                     <div className="max-w-4xl mx-auto w-full h-14 flex items-center justify-between">
@@ -58,7 +50,7 @@ export default function DashboardHeader({
                                         onSelect={() => {
                                             const newTitle = window.prompt('Enter new title:', survey.content.title);
                                             if (newTitle && newTitle !== survey.content.title) {
-                                                onRenameSurvey(newTitle);
+                                                handleRenameSurvey(newTitle);
                                             }
                                         }}
                                         className="text-sm text-white/80 hover:text-white hover:bg-white/5 px-2 py-1.5 rounded-md cursor-pointer outline-none transition-colors"
