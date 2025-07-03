@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useOptimization } from "@/hooks/useOptimization";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { useSurveyContext } from "@/context/SurveyContext";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
@@ -19,13 +18,8 @@ export default function SurveyEditLayout({ children }: { children: React.ReactNo
         deleteSurvey,
     } = useSurveyContext();
 
-    const { status: optimizationStatus, isImporting, handleImport } = useOptimization(
-        survey?.content ?? null,
-        'googleforms'
-    );
-
     const { authStatus, handleConnect } = useGoogleAuth();
-
+    
     useEffect(() => {
         if (!params.id || params.id === 'undefined') {
             router.replace('/survey/create?error=unknown_survey');
@@ -49,18 +43,29 @@ export default function SurveyEditLayout({ children }: { children: React.ReactNo
         }
     };
 
-    const handleGoogleFormsImport = async () => {
+    const handleGoogleFormsExport = async (surveyId: string) => {
         try {
-            const result = await handleImport();
-            if (result?.requiresAuth) {
-                handleConnect();
-                return;
+            const response = await fetch('/api/survey/export/google-forms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ surveyId }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 403 && data.requiresAuth) {
+                    handleConnect();
+                    return;
+                }
+                throw new Error(data.error || 'Failed to export survey');
             }
-            if (result?.url) {
-                window.open(result.url, '_blank');
+
+            if (data.url) {
+                window.open(data.url, '_blank');
             }
         } catch (error) {
-            console.error('Failed to import to Google Forms:', error);
+            console.error('Failed to export to Google Forms:', error);
             alert('Failed to export to Google Forms. Please try again.');
         }
     };
@@ -72,10 +77,10 @@ export default function SurveyEditLayout({ children }: { children: React.ReactNo
                     survey={survey}
                     onRenameSurvey={(newTitle:string) => survey ? renameSurvey(survey.id, newTitle) : Promise.resolve()}
                     onDeleteSurvey={handleDeleteCurrentSurvey}
-                    isImporting={isImporting}
-                    optimizationStatus={optimizationStatus}
+                    isImporting={false}
+                    optimizationStatus="ready"
                     authStatus={authStatus}
-                    onGoogleFormsImport={handleGoogleFormsImport}
+                    onGoogleFormsExport={handleGoogleFormsExport}
                     onConnect={handleConnect}
                     isLoading={isLoading}
                 />

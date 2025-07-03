@@ -9,7 +9,7 @@ interface DashboardHeaderProps {
     isImporting: boolean;
     optimizationStatus: string;
     authStatus: string;
-    onGoogleFormsImport: () => Promise<void>;
+    onGoogleFormsExport: (id: string) => Promise<void>;
     onConnect: () => void;
     isLoading: boolean;
 }
@@ -21,13 +21,22 @@ export default function DashboardHeader({
     isImporting,
     optimizationStatus,
     authStatus,
-    onGoogleFormsImport,
+    onGoogleFormsExport,
     onConnect,
     isLoading
 }: DashboardHeaderProps) {
     const handleRenameSurvey = async (newTitle: string) => {
         if (!survey) return;
         onRenameSurvey(newTitle).catch(console.error);
+    }
+
+    const handleGoogleFormsExport = async () => {
+        if (!survey) return;
+        if (authStatus === 'success') {
+            await onGoogleFormsExport(survey.id);
+        } else {
+            onConnect();
+        }
     }
 
     return (
@@ -75,7 +84,7 @@ export default function DashboardHeader({
                         </DropdownMenu.Root>
                         {optimizationStatus === 'ready' && (
                             <button
-                                onClick={authStatus === 'success' ? onGoogleFormsImport : onConnect}
+                                onClick={handleGoogleFormsExport}
                                 disabled={isImporting || authStatus === 'checking'}
                                 className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/15 text-zinc-200 text-sm rounded-md transition-colors disabled:opacity-70 disabled:hover:bg-white/10"
                             >
