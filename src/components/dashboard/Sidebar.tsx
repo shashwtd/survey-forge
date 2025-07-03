@@ -26,6 +26,7 @@ export default function Sidebar({
 }: SidebarProps) {
     const [user, setUser] = useState<User | null>(null);
     const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const supabase = createClient();
     const router = useRouter();
 
@@ -114,67 +115,85 @@ export default function Sidebar({
                             Your Surveys
                         </div>
                         <div className="flex flex-col gap-0.5">
-                            {savedSurveys.map((survey: SurveyHistory) => (
-                                <div
-                                    key={survey.id}
-                                    className="group relative flex items-center px-2 py-2 text-white/80 hover:bg-white/5 rounded-md cursor-pointer transition-colors"
-                                    onClick={() => handleSelectSurvey(survey.id)}
-                                >
-                                    {/* Survey Title */}
-                                    <div className="flex-1 min-w-0">
-                                        <span className="block text-sm truncate">
-                                            {survey.title}
-                                        </span>
-                                    </div>
+                            {savedSurveys.map((savedSurvey: SurveyHistory) => {
+                                const isSelected = savedSurvey.id === survey?.id;
+                                const isMenuOpen = openMenuId === savedSurvey.id;
+                                return (
+                                    <div
+                                        key={savedSurvey.id}
+                                        className={`
+                                            group relative flex items-center px-2 py-2 text-white/80 
+                                            hover:bg-white/5 rounded-md cursor-pointer transition-colors
+                                            ${isSelected ? 'bg-white/10 text-white' : ''}
+                                            ${isMenuOpen ? 'bg-white/5 text-white' : ''}
+                                        `}
+                                        onClick={() => handleSelectSurvey(savedSurvey.id)}
+                                    >
+                                        {/* Survey Title */}
+                                        <div className="flex-1 min-w-0">
+                                            <span className="block text-sm truncate">
+                                                {savedSurvey.title}
+                                            </span>
+                                        </div>
 
-                                    {/* Actions Menu */}
-                                    <DropdownMenu.Root>
-                                        <DropdownMenu.Trigger asChild>
-                                            <button 
-                                                className="opacity-0 group-hover:opacity-100 ml-2 p-1 text-white/40 hover:text-white bg-neutral-800/80 backdrop-blur-sm rounded transition-all"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <MoreVertical size={14} />
-                                            </button>
-                                        </DropdownMenu.Trigger>
-
-                                        <DropdownMenu.Portal>
-                                            <DropdownMenu.Content
-                                                className="min-w-[160px] bg-neutral-800/95 backdrop-blur-xl rounded-lg p-1 shadow-xl border border-white/10 z-[200]"
-                                                sideOffset={5}
-                                                align="end"
-                                            >
-                                                <DropdownMenu.Item
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleSelectSurvey(survey.id);
-                                                    }}
-                                                    className="text-sm text-white/80 hover:text-white hover:bg-white/5 px-2 py-1.5 rounded-md cursor-pointer outline-none transition-colors"
+                                        {/* Actions Menu */}
+                                        <DropdownMenu.Root 
+                                            open={isMenuOpen}
+                                            onOpenChange={(open) => setOpenMenuId(open ? savedSurvey.id : null)}
+                                        >
+                                            <DropdownMenu.Trigger asChild>
+                                                <button 
+                                                    className={`
+                                                        ml-2 p-1 text-white/40 hover:text-white 
+                                                        bg-neutral-800/80 backdrop-blur-sm rounded transition-all
+                                                        focus:outline-none focus-visible:ring-1 focus-visible:ring-white/20
+                                                        ${isSelected ? 'opacity-100' : ''}
+                                                        ${isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
+                                                    `}
+                                                    onClick={(e) => e.stopPropagation()}
                                                 >
-                                                    Open Survey
-                                                </DropdownMenu.Item>
-                                                
-                                                <DropdownMenu.Item
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (window.confirm('Are you sure you want to delete this survey? This action cannot be undone.')) {
-                                                            deleteSurvey(survey.id);
-                                                        }
-                                                    }}
-                                                    className="text-sm text-red-400 hover:text-red-300 hover:bg-white/5 px-2 py-1.5 rounded-md cursor-pointer outline-none transition-colors"
-                                                >
-                                                    Delete Survey
-                                                </DropdownMenu.Item>
-                                            </DropdownMenu.Content>
-                                        </DropdownMenu.Portal>
-                                    </DropdownMenu.Root>
+                                                    <MoreVertical size={14} />
+                                                </button>
+                                            </DropdownMenu.Trigger>
 
-                                    {/* Date tooltip */}
-                                    <div className="absolute left-2 -top-8 bg-neutral-800/95 backdrop-blur-xl text-white/80 text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-white/10 z-[150]">
-                                        {new Date(survey.created_at).toLocaleDateString()}
+                                            <DropdownMenu.Portal>
+                                                <DropdownMenu.Content
+                                                    className="min-w-[160px] bg-neutral-800/95 backdrop-blur-xl rounded-lg p-1 shadow-xl border border-white/10 z-[200]"
+                                                    sideOffset={5}
+                                                    align="end"
+                                                >
+                                                    <DropdownMenu.Item
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleSelectSurvey(savedSurvey.id);
+                                                        }}
+                                                        className="text-sm text-white/80 hover:text-white hover:bg-white/5 px-2 py-1.5 rounded-md cursor-pointer outline-none focus:outline-none transition-colors"
+                                                    >
+                                                        Open Survey
+                                                    </DropdownMenu.Item>
+                                                    
+                                                    <DropdownMenu.Item
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (window.confirm('Are you sure you want to delete this survey? This action cannot be undone.')) {
+                                                                deleteSurvey(savedSurvey.id);
+                                                            }
+                                                        }}
+                                                        className="text-sm text-red-400 hover:text-red-300 hover:bg-white/5 px-2 py-1.5 rounded-md cursor-pointer outline-none focus:outline-none transition-colors"
+                                                    >
+                                                        Delete Survey
+                                                    </DropdownMenu.Item>
+                                                </DropdownMenu.Content>
+                                            </DropdownMenu.Portal>
+                                        </DropdownMenu.Root>
+
+                                        {/* Date tooltip */}
+                                        <div className="absolute left-2 -top-8 bg-neutral-800/95 backdrop-blur-xl text-white/80 text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-white/10 z-[150]">
+                                            {new Date(savedSurvey.created_at).toLocaleDateString()}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
