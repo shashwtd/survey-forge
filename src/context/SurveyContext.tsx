@@ -56,6 +56,21 @@ export function SurveyProvider({ children }: { children: React.ReactNode }) {
         // If we already have this survey loaded, don't fetch it again
         if (survey?.id === id) return;
 
+        // Find the survey in our saved list to show immediately
+        const savedSurvey = savedSurveys.find(s => s.id === id);
+        if (savedSurvey) {
+            // Set a loading state of the survey immediately
+            setSurvey({
+                id: savedSurvey.id,
+                content: {
+                    title: savedSurvey.title,
+                    description: '',  // Will be updated after API call
+                    questions: [],    // Will be populated after API call
+                    settings: {}
+                }
+            });
+        }
+
         setIsLoading(true);
         setError(null);
         try {
@@ -72,7 +87,7 @@ export function SurveyProvider({ children }: { children: React.ReactNode }) {
         } finally {
             setIsLoading(false);
         }
-    }, [survey?.id]);
+    }, [survey?.id, savedSurveys]);
 
     const createSurvey = async (content: string): Promise<{ id: string, content: SurveyType }> => {
         setIsLoading(true);
@@ -91,15 +106,26 @@ export function SurveyProvider({ children }: { children: React.ReactNode }) {
                 throw new Error(data.error || 'Failed to create survey');
             }
 
-            // Update the surveys list with the new survey
-            const newSavedSurvey: SavedSurvey = {
+            // Create the new survey object
+            const newSurvey = {
                 id: data.id,
                 title: data.title,
+                content: data.content,
                 created_at: new Date().toISOString()
             };
 
-            setSavedSurveys(prev => [...prev, newSavedSurvey]);
-            setSurvey({ id: data.id, content: data.content });
+            // Add new survey to the beginning of the list
+            setSavedSurveys(prev => [
+                {
+                    id: data.id,
+                    title: data.title,
+                    created_at: new Date().toISOString()
+                },
+                ...prev
+            ]);
+
+            // Set as current survey
+            setSurvey(newSurvey);
 
             return { id: data.id, content: data.content };
         } catch (error) {
