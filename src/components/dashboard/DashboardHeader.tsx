@@ -11,6 +11,7 @@ interface DashboardHeaderProps {
     authStatus: string;
     onGoogleFormsImport: () => Promise<void>;
     onConnect: () => void;
+    isLoading: boolean;
 }
 
 export default function DashboardHeader({ 
@@ -21,7 +22,8 @@ export default function DashboardHeader({
     optimizationStatus,
     authStatus,
     onGoogleFormsImport,
-    onConnect
+    onConnect,
+    isLoading
 }: DashboardHeaderProps) {
     const handleRenameSurvey = async (newTitle: string) => {
         if (!survey) return;
@@ -35,8 +37,13 @@ export default function DashboardHeader({
                     <div className="max-w-4xl mx-auto w-full h-14 flex items-center justify-between">
                         <DropdownMenu.Root>
                             <DropdownMenu.Trigger asChild>
-                                <button className="group relative flex items-center px-2 py-2 text-white/80 hover:bg-white/5 rounded-md cursor-pointer transition-colors">
-                                    <span className="text-sm truncate max-w-[300px]">{survey.content.title}</span>
+                                <button className="group relative flex items-center px-2 -ml-2 py-2 text-white/80 hover:bg-white/5 rounded-md cursor-pointer transition-colors">
+                                    { isLoading ? (
+                                        // skeleton loader
+                                        <span className="w-40 h-4 bg-neutral-800 animate-pulse rounded-md"></span>
+                                    ) : (
+                                        <span className="text-sm truncate max-w-[300px]">{survey.content.title} </span>
+                                    )}
                                     <MoreVertical size={14} className="ml-2 opacity-0 group-hover:opacity-100 text-white/40 hover:text-white transition-all" />
                                 </button>
                             </DropdownMenu.Trigger>

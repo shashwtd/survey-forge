@@ -13,6 +13,7 @@ export default function SurveyEditLayout({ children }: { children: React.ReactNo
 
     const { 
         survey,
+        isLoading,
         selectSurvey,
         renameSurvey,
         deleteSurvey,
@@ -25,13 +26,20 @@ export default function SurveyEditLayout({ children }: { children: React.ReactNo
 
     const { authStatus, handleConnect } = useGoogleAuth();
 
-    // Load survey only if we don't have it or if it's a different one
     useEffect(() => {
-        if (!params.id) return;
-        if (!survey || survey.id !== params.id) {
-            selectSurvey(params.id as string);
+        if (!params.id || params.id === 'undefined') {
+            router.replace('/survey/create?error=unknown_survey');
+            return;
         }
-    }, [params.id, survey, selectSurvey]);
+        
+        // Only fetch if we don't have the survey or it's a different one
+        if (!survey || survey.id !== params.id) {
+            selectSurvey(params.id as string).catch((error) => {
+                console.error('Failed to load survey:', error);
+                router.replace('/survey/create?error=unknown_survey');
+            });
+        }
+    }, [params.id, survey, selectSurvey, router]);
 
     const handleDeleteCurrentSurvey = async () => {
         if (!survey) return;
@@ -68,6 +76,7 @@ export default function SurveyEditLayout({ children }: { children: React.ReactNo
                 authStatus={authStatus}
                 onGoogleFormsImport={handleGoogleFormsImport}
                 onConnect={handleConnect}
+                isLoading={isLoading}
             />
             {children}
         </div>

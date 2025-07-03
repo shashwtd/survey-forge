@@ -27,19 +27,19 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const survey = await generateSurvey(content);
+        const surveyContent = await generateSurvey(content);
 
         // Save the survey to the database
-        const { error: saveError } = await supabase
+        const { data: savedSurvey, error: saveError } = await supabase
             .from("surveys")
             .insert([
                 {
                     user_id: user.id,
-                    content: survey,
+                    content: surveyContent,
                     // Generate a title from the first question or use the survey title
                     title:
-                        survey.title ||
-                        survey.questions?.[0]?.question?.slice(0, 100) ||
+                        surveyContent.title ||
+                        surveyContent.questions?.[0]?.question?.slice(0, 100) ||
                         "Untitled Survey",
                 },
             ])
@@ -57,7 +57,14 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        return NextResponse.json(survey);
+        console.log("NEW SURVEY CREATED:", savedSurvey, savedSurvey.id);
+
+        // Return both the ID and the content
+        return NextResponse.json({
+            id: savedSurvey.id,
+            content: surveyContent,
+            title: savedSurvey.title,
+        });
     } catch (error) {
         // Log the error details for debugging
         if (error instanceof GeminiServiceError) {

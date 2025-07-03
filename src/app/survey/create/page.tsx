@@ -2,18 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { SurveyCreator } from "@/components/dashboard/SurveyCreator";
-import { useSurveyManagement } from "@/hooks/useSurveyManagement";
+import { useSurveyContext } from "@/context/SurveyContext";
 
 export default function CreateSurveyPage() {
     const router = useRouter();
-    const { isLoading, error, createSurvey } = useSurveyManagement();
+    const { isLoading, error, createSurvey } = useSurveyContext();
 
     const handleCreateSurvey = async (content: string) => {
         try {
-            await createSurvey(content);
-            // After creating the survey, redirect to the dashboard
-            // The survey will be visible in the sidebar
-            router.push('/dashboard');
+            const newSurvey = await createSurvey(content);
+            // After creating the survey, redirect to the edit page
+            router.push(`/survey/edit/${newSurvey.id}`);
         } catch (err) {
             console.error('Error creating survey:', err);
         }

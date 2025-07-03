@@ -10,17 +10,25 @@ import { GoogleFormsForm, GoogleFormsItem } from "@/types/GoogleFormSurvey";
 
 // The main function
 export async function optimizeSurvey(
-    survey: SurveyType,
+    survey: SurveyType | null,
     platform: "google_forms" | "qualtrics" | "surveymonkey"
-): Promise<GoogleFormsForm | SurveyType> {
-    if (platform === "google_forms") {
-        return optimizeForGoogleForms(survey);
-    } else if (platform === "qualtrics") {
-        return optimizeForQualtrics(survey);
-    } else if (platform === "surveymonkey") {
-        return optimizeForSurveyMonkey(survey);
-    } else {
-        throw new Error("Unsupported platform");
+): Promise<SurveyType | GoogleFormsForm> {
+    if (!survey) {
+        throw new Error("Survey data is required");
+    }
+
+    try {
+        if (platform === "google_forms") {
+            return convertToGoogleForms(survey);
+        } else if (platform === "qualtrics") {
+            return await optimizeForQualtrics(survey);
+        } else if (platform === "surveymonkey") {
+            return await optimizeForSurveyMonkey(survey);
+        }
+        return survey; // Return original survey for unsupported platforms
+    } catch (error) {
+        console.error("Error optimizing survey:", error);
+        throw error;
     }
 }
 
@@ -105,17 +113,34 @@ function convertToGoogleFormsItem(question: SurveyQuestion): GoogleFormsItem {
     };
 }
 
-async function optimizeForGoogleForms(survey: SurveyType): Promise<GoogleFormsForm> {
+export async function optimizeForGoogleForms(survey: SurveyType | null): Promise<GoogleFormsForm> {
+    if (!survey) {
+        throw new Error('Survey data is required');
+    }
+
+    try {
+        return convertToGoogleForms(survey);
+    } catch (error) {
+        console.error('Error converting survey to Google Forms format:', error);
+        throw error;
+    }
+}
+
+function convertToGoogleForms(survey: SurveyType): GoogleFormsForm {
+    if (!survey || !survey.questions) {
+        throw new Error('Invalid survey data: survey or questions is undefined');
+    }
+
     return {
         info: {
-            title: survey.title,
-            documentTitle: survey.title,
-            description: survey.description
+            title: survey.title || 'Untitled Survey',
+            documentTitle: survey.title || 'Untitled Survey',
+            description: survey.description || '',
         },
         settings: {
             collectEmail: survey.settings?.collectEmail ?? false
         },
-        items: survey.questions.map(convertToGoogleFormsItem)
+        items: Array.isArray(survey.questions) ? survey.questions.map(convertToGoogleFormsItem) : []
     };
 }
 
