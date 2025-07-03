@@ -7,23 +7,30 @@ import { LucideArrowRight } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 
+const Tooltip = ({ children }: { children: React.ReactNode }) => (
+    <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 px-3 py-2 bg-neutral-900 rounded-lg text-sm text-white/80 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+        {children}
+        <div className="absolute -top-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-b-neutral-900" />
+    </div>
+);
+
 interface NavLinkProps {
-    href: string;
     children: React.ReactNode;
 }
 
 const NavLink: React.FC<NavLinkProps & { className?: string }> = ({
-    href,
     children,
     className,
 }) => {
     return (
-        <Link
-            href={href}
-            className={`hover:text-white/80 text-lg transition-colors font-sans text-white/60 ${className}`}
-        >
-            {children}
-        </Link>
+        <div className="relative group">
+            <div
+                className={`hover:text-white/80 text-lg transition-colors font-sans text-white/60 ${className}`}
+            >
+                {children}
+            </div>
+            <Tooltip>TBA</Tooltip>
+        </div>
     );
 };
 
@@ -58,6 +65,7 @@ const Header: React.FC = () => {
     }, [supabase.auth, router]);
 
 
+
     return (
         <header className="text-white py-3 backdrop-blur-2xl px-16 fixed w-full top-0 z-50 select-none bg-black/5">
             <div className="mx-auto flex items-center justify-between max-w-[1560px]">
@@ -70,11 +78,11 @@ const Header: React.FC = () => {
                     </h1>
                 </Link>
 
-                <nav className="space-x-8">
-                    <NavLink href="/templates">Templates</NavLink>
-                    <NavLink href="/templates">Documentation</NavLink>
-                    <NavLink href="/pricing">Pricing</NavLink>
-                    <NavLink href="/about">About</NavLink>
+                <nav className="space-x-8 flex flex-row">
+                    <NavLink>Templates</NavLink>
+                    <NavLink>Documentation</NavLink>
+                    <NavLink>Pricing</NavLink>
+                    <NavLink>About</NavLink>
                 </nav>
 
                 {user ? (
@@ -89,9 +97,9 @@ const Header: React.FC = () => {
                     </Link>
                 ) : (
                     <div className="flex items-center space-x-5">
-                        <NavLink href="/login" className="">
+                        <Link href="/login" className="hover:text-white/80 text-lg transition-colors font-sans text-white/60">
                             Login
-                        </NavLink>
+                        </Link>
                         <Link
                             href={"/signup"}
                             className="group flex items-center justify-center gap-2 w-max h-max px-5 pl-6 py-1.25 pb-1.5 my-1 rounded-full bg-[#3f4da8] hover:bg-[#28368f] cursor-pointer duration-200"
