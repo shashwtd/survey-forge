@@ -76,13 +76,18 @@ export default function DashboardHeader({
                         {optimizationStatus === 'ready' && (
                             <button
                                 onClick={authStatus === 'success' ? onGoogleFormsImport : onConnect}
-                                disabled={isImporting}
+                                disabled={isImporting || authStatus === 'checking'}
                                 className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/15 text-zinc-200 text-sm rounded-md transition-colors disabled:opacity-70 disabled:hover:bg-white/10"
                             >
                                 {isImporting ? (
                                     <>
                                         <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></div>
                                         Exporting...
+                                    </>
+                                ) : authStatus === 'checking' ? (
+                                    <>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></div>
+                                        Checking auth...
                                     </>
                                 ) : (
                                     <>

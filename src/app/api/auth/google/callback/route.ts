@@ -7,19 +7,20 @@ export async function GET(request: NextRequest) {
     const protocol = request.headers.get('x-forwarded-proto') || 'http';
     const host = request.headers.get('host');
     const baseUrl = `${protocol}://${host}`;
-
+    
     try {
         const searchParams = request.nextUrl.searchParams;
         const code = searchParams.get('code');
         const error = searchParams.get('error');
+        const returnTo = searchParams.get('state') || '/survey/create';  // Get return path from state param
 
         if (error) {
             console.error('Google OAuth error:', error);
-            return NextResponse.redirect(`${baseUrl}/dashboard?error=auth_failed`);
+            return NextResponse.redirect(`${baseUrl}${returnTo}?error=auth_failed`);
         }
         
         if (!code) {
-            return NextResponse.redirect(`${baseUrl}/dashboard?error=no_code`);
+            return NextResponse.redirect(`${baseUrl}${returnTo}?error=no_code`);
         }
 
         // Get Supabase client
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
 
         if (!tokens.access_token || !tokens.refresh_token) {
             console.error('Failed to get tokens');
-            return NextResponse.redirect(`${baseUrl}/dashboard?error=no_tokens`);
+            return NextResponse.redirect(`${baseUrl}${returnTo}?error=no_tokens`);
         }
 
         // Calculate expiration time
@@ -63,12 +64,13 @@ export async function GET(request: NextRequest) {
 
         if (tokenError) {
             console.error('Failed to store tokens:', tokenError);
-            return NextResponse.redirect(`${baseUrl}/dashboard?error=token_storage_failed`);
+            return NextResponse.redirect(`${baseUrl}${returnTo}?error=token_storage_failed`);
         }
 
-        return NextResponse.redirect(`${baseUrl}/dashboard?success=connected`);
+        return NextResponse.redirect(`${baseUrl}${returnTo}?success=connected`);
     } catch (error) {
         console.error('Google OAuth error:', error);
-        return NextResponse.redirect(`${baseUrl}/dashboard?error=auth_failed`);
+        const returnTo = request.nextUrl.searchParams.get('state') || '/survey/create';
+        return NextResponse.redirect(`${baseUrl}${returnTo}?error=auth_failed`);
     }
 }
