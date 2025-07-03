@@ -18,7 +18,7 @@ interface SurveyContextType {
     error: string | null;
     fetchSurveys: () => Promise<void>;
     selectSurvey: (id: string) => Promise<void>;
-    createSurvey: (content: string) => Promise<void>;
+    createSurvey: (content: string) => Promise<{ id: string; content: SurveyType }> ;
     renameSurvey: (id: string, newTitle: string) => Promise<void>;
     updateDescription: (id: string, newDescription: string) => Promise<void>;
     deleteSurvey: (id: string) => Promise<void>;
@@ -74,33 +74,42 @@ export function SurveyProvider({ children }: { children: React.ReactNode }) {
         }
     }, [survey?.id]);
 
-    const createSurvey = useCallback(async (content: string) => {
+    const createSurvey = async (content: string): Promise<{ id: string, content: SurveyType }> => {
         setIsLoading(true);
-        setError(null);
         try {
             const response = await fetch('/api/survey/generate', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({ content }),
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to generate survey');
+                throw new Error(data.error || 'Failed to create survey');
             }
 
-            setSurvey({ id: data.id, content: data });
-            setSurveysLoaded(false); // Force a refresh of the survey list
-            await fetchSurveys();
+            // Update the surveys list with the new survey
+            const newSavedSurvey: SavedSurvey = {
+                id: data.id,
+                title: data.title,
+                created_at: new Date().toISOString()
+            };
+
+            setSavedSurveys(prev => [...prev, newSavedSurvey]);
+            setSurvey({ id: data.id, content: data.content });
+
+            return { id: data.id, content: data.content };
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Failed to create survey';
-            setError(message);
+            console.error('Error creating survey:', error);
+            setError(error instanceof Error ? error.message : 'Failed to create survey');
             throw error;
         } finally {
             setIsLoading(false);
         }
-    }, [fetchSurveys]);
+    };
 
     const renameSurvey = useCallback(async (id: string, newTitle: string) => {
         setError(null);
