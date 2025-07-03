@@ -33,11 +33,11 @@ export default function DashboardHeader({
     return (
         <>
             {survey && (
-                <div className="sticky top-0 z-10 backdrop-blur-xl bg-neutral-900/95 border-b border-white/10">
+                <div className="backdrop-blur-xl bg-neutral-900/95 border-b border-white/10">
                     <div className="max-w-4xl mx-auto w-full h-14 flex items-center justify-between">
                         <DropdownMenu.Root>
                             <DropdownMenu.Trigger asChild>
-                                <button className="group relative flex items-center px-2 -ml-2 py-2 text-white/80 hover:bg-white/5 rounded-md cursor-pointer transition-colors">
+                                <button className="group relative flex items-center px-2 -ml-4 py-2 text-white/80 hover:bg-white/5 rounded-md cursor-pointer transition-colors">
                                     { isLoading ? (
                                         // skeleton loader
                                         <span className="w-40 h-4 bg-neutral-800 animate-pulse rounded-md"></span>

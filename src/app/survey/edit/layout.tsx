@@ -66,18 +66,20 @@ export default function SurveyEditLayout({ children }: { children: React.ReactNo
     };
 
     return (
-        <div className="flex flex-col h-screen w-full bg-[#09090b] overflow-hidden">
-            <DashboardHeader 
-                survey={survey}
-                onRenameSurvey={(newTitle:string) => survey ? renameSurvey(survey.id, newTitle) : Promise.resolve()}
-                onDeleteSurvey={handleDeleteCurrentSurvey}
-                isImporting={isImporting}
-                optimizationStatus={optimizationStatus}
-                authStatus={authStatus}
-                onGoogleFormsImport={handleGoogleFormsImport}
-                onConnect={handleConnect}
-                isLoading={isLoading}
-            />
+        <div className="flex flex-col min-h-screen bg-[#09090b]">
+            <div className="sticky top-0 z-50">
+                <DashboardHeader 
+                    survey={survey}
+                    onRenameSurvey={(newTitle:string) => survey ? renameSurvey(survey.id, newTitle) : Promise.resolve()}
+                    onDeleteSurvey={handleDeleteCurrentSurvey}
+                    isImporting={isImporting}
+                    optimizationStatus={optimizationStatus}
+                    authStatus={authStatus}
+                    onGoogleFormsImport={handleGoogleFormsImport}
+                    onConnect={handleConnect}
+                    isLoading={isLoading}
+                />
+            </div>
             {children}
         </div>
     );
