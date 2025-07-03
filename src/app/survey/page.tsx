@@ -1,10 +1,22 @@
 import { redirect } from 'next/navigation';
 
-export default function SurveyPage({ 
+export default async function SurveyPage({ 
     searchParams
 }: {
-    searchParams: { [key: string]: string | string[] | undefined }
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-    const queryString = new URLSearchParams(searchParams as Record<string, string>).toString();
+    const params = await searchParams;
+    
+    // Filter out undefined values and convert arrays to strings
+    const validParams = Object.fromEntries(
+        Object.entries(params)
+            .filter(([, value]) => value !== undefined)
+            .map(([key, value]) => [
+                key,
+                Array.isArray(value) ? value.join(',') : value
+            ])
+    ) as Record<string, string>;
+
+    const queryString = new URLSearchParams(validParams).toString();
     redirect(`/survey/create${queryString ? `?${queryString}` : ''}`);
 }
