@@ -6,8 +6,10 @@ interface DashboardHeaderProps {
     survey: { id: string; content: SurveyType } | null;
     onRenameSurvey: (newTitle: string) => Promise<void>;
     onDeleteSurvey: () => void;
-    isImporting: boolean;
-    optimizationStatus: string;
+    exportStatus: {
+        status: 'idle' | 'exporting' | 'optimizing' | 'creating' | 'success' | 'error';
+        message?: string;
+    };
     authStatus: string;
     onGoogleFormsExport: (id: string) => Promise<void>;
     onConnect: () => void;
@@ -18,8 +20,7 @@ export default function DashboardHeader({
     survey,
     onRenameSurvey,
     onDeleteSurvey,
-    isImporting,
-    optimizationStatus,
+    exportStatus,
     authStatus,
     onGoogleFormsExport,
     onConnect,
@@ -32,12 +33,58 @@ export default function DashboardHeader({
 
     const handleGoogleFormsExport = async () => {
         if (!survey) return;
+        if (exportStatus.status !== 'idle' && exportStatus.status !== 'error') return;
         if (authStatus === 'success') {
             await onGoogleFormsExport(survey.id);
         } else {
             onConnect();
         }
     }
+
+    const getExportButtonContent = () => {
+        if (exportStatus.status === 'exporting' || exportStatus.status === 'optimizing' || exportStatus.status === 'creating') {
+            return (
+                <>
+                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></div>
+                    {exportStatus.message || 'Processing...'}
+                </>
+            );
+        }
+
+        if (exportStatus.status === 'success') {
+            return (
+                <>
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                    {exportStatus.message || 'Success!'}
+                </>
+            );
+        }
+
+        if (exportStatus.status === 'error') {
+            return (
+                <>
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                    {exportStatus.message || 'Error'}
+                </>
+            );
+        }
+
+        if (authStatus === 'checking') {
+            return (
+                <>
+                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></div>
+                    Checking auth...
+                </>
+            );
+        }
+
+        return (
+            <>
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                {authStatus === 'success' ? 'Export to Google Forms' : 'Connect Google Account'}
+            </>
+        );
+    };
 
     return (
         <>
@@ -82,30 +129,13 @@ export default function DashboardHeader({
                                 </DropdownMenu.Content>
                             </DropdownMenu.Portal>
                         </DropdownMenu.Root>
-                        {optimizationStatus === 'ready' && (
-                            <button
-                                onClick={handleGoogleFormsExport}
-                                disabled={isImporting || authStatus === 'checking'}
-                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/15 text-zinc-200 text-sm rounded-md transition-colors disabled:opacity-70 disabled:hover:bg-white/10"
-                            >
-                                {isImporting ? (
-                                    <>
-                                        <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></div>
-                                        Exporting...
-                                    </>
-                                ) : authStatus === 'checking' ? (
-                                    <>
-                                        <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></div>
-                                        Checking auth...
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                                        {authStatus === 'success' ? 'Export to Google Forms' : 'Connect Google Account'}
-                                    </>
-                                )}
-                            </button>
-                        )}
+                        <button
+                            onClick={handleGoogleFormsExport}
+                            disabled={exportStatus.status !== 'idle' && exportStatus.status !== 'error'}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/15 text-zinc-200 text-sm rounded-md transition-colors disabled:opacity-70 disabled:hover:bg-white/10 disabled:cursor-not-allowed"
+                        >
+                            {getExportButtonContent()}
+                        </button>
                     </div>
                 </div>
             )}
