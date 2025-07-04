@@ -57,7 +57,7 @@ export default function Footer() {
                     </div>
 
                     {/* Navigation Links */}
-                    <div className="flex flex-row items-start justify-end gap-8 md:col-span-7 md:grid-cols-2">
+                    <div className="flex flex-row items-start justify-end gap-16 md:col-span-7 md:grid-cols-2">
                         {/* Product Links */}
                         <div>
                             <h3 className="text-sm font-semibold">
