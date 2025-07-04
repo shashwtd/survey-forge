@@ -30,13 +30,20 @@ export const signUpAction = async (formData: FormData) => {
   if (error) {
     console.error(error.code + " " + error.message);
     return encodedRedirect("error", "/signup", error.message);
-  } else {
-    return encodedRedirect(
-      "success",
-      "/signup",
-      "Thanks for signing up! Please check your email for a verification link.",
-    );
   }
+
+  // Check if we have a session after sign up
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    return redirect("/survey/create");
+  }
+
+  // If no session yet, show success message
+  return encodedRedirect(
+    "success",
+    "/signup",
+    "Your account has been created successfully! You can start using Survey Forge now.",
+  );
 };
 
 export const signInAction = async (formData: FormData) => {

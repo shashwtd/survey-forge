@@ -3,11 +3,13 @@
 import { signUpAction } from "@/app/actions";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import VerificationNotice from "@/components/VerificationNotice";
+import { useRouter } from "next/navigation";
 
 export default function SignUp() {
+    const router = useRouter();
     const { pending } = useFormStatus();
     const [isValid, setIsValid] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -19,6 +21,12 @@ export default function SignUp() {
         setIsValid(form.checkValidity());
         setUserEmail(form.email.value);
     };
+
+    useEffect(() => {
+        if (typeof window !== "undefined" && window.location.search.includes("success")) {
+            router.push("/survey/create");
+        }
+    }, [router]);
 
     return (
         <>
