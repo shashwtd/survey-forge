@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Settings2, Play, Check, ChevronDown } from 'lucide-react';
 import * as Select from '@radix-ui/react-select';
+import { extractFileContent } from '@/utils/fileExtractors';
 
 type PlatformKey = 'qualtrics' | 'surveymonkey' | 'googleforms';
 
@@ -20,6 +21,7 @@ export function SurveyCreator({ onSubmit, isLoading, error }: SurveyCreatorProps
     const [activeTab, setActiveTab] = useState("text");
     const [textContent, setTextContent] = useState("");
     const [file, setFile] = useState<File | null>(null);
+    const [fileContext, setFileContext] = useState("");
     const [isDragging, setIsDragging] = useState(false);
     const [selectedPlatform, setSelectedPlatform] = useState<PlatformKey>('googleforms');
 
@@ -33,36 +35,73 @@ export function SurveyCreator({ onSubmit, isLoading, error }: SurveyCreatorProps
         setIsDragging(false);
     }, []);
 
+    const validateFile = useCallback((file: File) => {
+        const validTypes = [
+            "text/plain",
+            "text/markdown",
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ];
+        
+        if (!validTypes.includes(file.type)) {
+            return "Invalid file type. Please upload a PDF or Word document.";
+        }
+        
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size === 0) {
+            return "File appears to be empty.";
+        }
+        if (file.size > maxSize) {
+            return "File size exceeds 10MB limit.";
+        }
+        
+        return null;
+    }, []);
+
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
         const droppedFile = e.dataTransfer.files[0];
-        if (droppedFile && ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(droppedFile.type)) {
+        if (droppedFile) {
+            const error = validateFile(droppedFile);
+            if (error) {
+                // You might want to show this error to the user
+                console.error(error);
+                return;
+            }
             setFile(droppedFile);
         }
-    }, []);
+    }, [validateFile]);
 
     const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
         if (selectedFile) {
+            const error = validateFile(selectedFile);
+            if (error) {
+                // You might want to show this error to the user
+                console.error(error);
+                return;
+            }
             setFile(selectedFile);
         }
-    }, []);
+    }, [validateFile]);
 
     const handleSubmit = async () => {
         let content = '';
 
-        if (activeTab === 'text') {
-            content = textContent;
-        } else if (file) {
-            content = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target?.result as string);
-                reader.readAsText(file);
-            });
-        }
+        try {
+            if (activeTab === 'text') {
+                content = textContent;
+            } else if (file) {
+                const fileContent = await extractFileContent(file);
+                content = fileContext ? `${fileContext}\n\n${fileContent}` : fileContent;
+            }
 
-        await onSubmit(content);
+            await onSubmit(content);
+        } catch (err) {
+            console.error('Error processing file:', err);
+        }
     };
 
     const isSubmitDisabled = (activeTab === "text" ? !textContent.trim() : !file) || 
@@ -115,22 +154,37 @@ export function SurveyCreator({ onSubmit, isLoading, error }: SurveyCreatorProps
                             value={textContent}
                             onChange={(e) => setTextContent(e.target.value)}
                             className="w-full h-64 rounded-md border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#3f4da8] focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                            placeholder="Enter your survey context here..."
+                            placeholder="Describe your survey needs here. For example:&#10;&#10;• Topic or research area you want to explore&#10;• Target audience (e.g., customers, employees, students)&#10;• Key objectives or insights you want to gather&#10;• Specific questions you'd like to include&#10;• Any special requirements or preferences&#10;&#10;The more details you provide, the better the generated survey will match your needs."
                         />
                     </div>
 
                     {/* File Upload */}
                     <div
-                        className={`${activeTab === "file" ? "block" : "hidden"}`}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
+                        className={`${activeTab === "file" ? "flex flex-col gap-4" : "hidden"}`}
                     >
-                        <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                            isDragging
-                                ? "border-[#3f4da8] bg-[#3f4da8]/5"
-                                : "border-white/20 hover:border-white/30"
-                        }`}>
+                        <div>
+                            <label htmlFor="file-context" className="block text-sm font-medium text-white/75 mb-2">
+                                Additional Context (Optional)
+                            </label>
+                            <textarea
+                                id="file-context"
+                                value={fileContext}
+                                onChange={(e) => setFileContext(e.target.value)}
+                                className="w-full h-20 rounded-md border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#3f4da8] focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                                placeholder="Add any additional context or specific requirements for the survey generation:&#10;&#10;• Highlight specific sections to focus on&#10;• Add custom questions you'd like to include&#10;• Specify target audience or survey style preferences"
+                            />
+                        </div>
+                        
+                        <div
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                                isDragging
+                                    ? "border-[#3f4da8] bg-[#3f4da8]/5"
+                                    : "border-white/20 hover:border-white/30"
+                            }`}
+                        >
                             <div className="flex flex-col items-center gap-2">
                                 <div className="p-3 rounded-full bg-white/5">
                                     <svg
@@ -158,7 +212,7 @@ export function SurveyCreator({ onSubmit, isLoading, error }: SurveyCreatorProps
                                                 <input
                                                     type="file"
                                                     className="hidden"
-                                                    accept=".pdf,.doc,.docx"
+                                                    accept=".pdf,.doc,.docx,text/plain,text/markdown"
                                                     onChange={handleFileChange}
                                                 />
                                             </label>
@@ -167,11 +221,12 @@ export function SurveyCreator({ onSubmit, isLoading, error }: SurveyCreatorProps
                                 </div>
                                 <p className="text-sm text-white/60">
                                     {file
-                                        ? `${(file.size / 1024 / 1024).toFixed(2)}MB`
+                                        ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
                                         : "PDF, DOC, DOCX up to 10MB"}
                                 </p>
                             </div>
                         </div>
+                        
                     </div>
 
                     {/* Platform Selection and Submit */}
