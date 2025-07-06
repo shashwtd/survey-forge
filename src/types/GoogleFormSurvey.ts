@@ -87,7 +87,8 @@ export interface GoogleFormsItem {
             };
         };
     };
-    pageBreakItem?: {
-        pageNavigationType?: "CONTINUE" | "GO_TO_PAGE" | "RESTART";
+    sectionHeader?: {
+        title: string;
+        description?: string;
     };
 }

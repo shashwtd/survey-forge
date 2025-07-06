@@ -13,7 +13,8 @@ export type QuestionType =
     | "date"
     | "time"
     | "email"
-    | "number";
+    | "number"
+    | "section";
 
 interface SurveyQuestion {
     id: string;
@@ -81,6 +82,7 @@ export async function generateSurvey(content: string): Promise<Survey> {
    - time: Use only for actual time inputs (preferred time, scheduling)
    - email: Use only when collecting email addresses
    - number: Use for numeric inputs (age, quantity, etc.)
+   - section: Use ONLY for creating section headers to organize the survey. Not a question type - just for grouping related questions with a title and optional description. Use sparingly to maintain survey flow. Use only when necessary in long surveys, or requested by the user.
 
 6. Keep surveys focused and efficient:
    - Avoid redundant or overlapping questions
@@ -118,6 +120,12 @@ Use this exact JSON structure:
                     "pattern": "regex pattern"
                 }
             }
+        },
+        {
+            "question": "Section Title",
+            "type": "section",
+            "required": false,
+            "description": "Optional section description that provides context for the following questions"
         }
     ]
 }
@@ -165,6 +173,11 @@ Content to create survey for: ${content}`;
                             "INVALID_QUESTION",
                             400
                         );
+                    }
+
+                    // Skip option validation for section type
+                    if (q.type === 'section') {
+                        return;
                     }
 
                     // Ensure options are present for choice-based questions

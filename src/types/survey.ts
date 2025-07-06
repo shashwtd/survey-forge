@@ -31,7 +31,8 @@ export type QuestionType =
     | 'date'            // Date picker
     | 'time'            // Time picker
     | 'email'           // Email input
-    | 'number';         // Numeric input
+    | 'number'          // Numeric input
+    | 'section';        // Section header with description
 
 export interface SurveyType {
     title: string;

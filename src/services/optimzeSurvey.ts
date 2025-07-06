@@ -51,6 +51,10 @@ function mapQuestionTypeToGoogleForms(type: string): {
     timeQuestion?: {
         duration?: boolean;
     };
+    sectionHeader?: {
+        title: string;
+        description?: string;
+    };
 } {
     switch (type) {
         case 'text':
@@ -76,12 +80,25 @@ function mapQuestionTypeToGoogleForms(type: string): {
             return { dateQuestion: { includeYear: true } };
         case 'time':
             return { timeQuestion: { duration: false } };
+        case 'section':
+            return { sectionHeader: { title: "" } }; // Empty title will be replaced in convertToGoogleFormsItem
         default:
             return { textQuestion: { paragraph: false } };
     }
 }
 
 function convertToGoogleFormsItem(question: SurveyQuestion): GoogleFormsItem {
+    if (question.type === 'section') {
+        return {
+            title: question.question,
+            description: question.description,
+            sectionHeader: {
+                title: question.question,
+                description: question.description
+            }
+        };
+    }
+
     const baseQuestion = mapQuestionTypeToGoogleForms(question.type);
     
     // Handle options for choice questions
