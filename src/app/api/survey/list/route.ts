@@ -7,8 +7,8 @@ export async function GET() {
         const supabase = await createClient();
 
         // Check if user is authenticated
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
             return NextResponse.json(
                 { error: "Authentication required" },
                 { status: 401 }
@@ -32,7 +32,8 @@ export async function GET() {
             );
         }
 
-        return NextResponse.json(surveys);
+        // Return empty array if no surveys found
+        return NextResponse.json(surveys || []);
     } catch (error) {
         console.error("[Survey List] Unexpected error:", error);
         return NextResponse.json(

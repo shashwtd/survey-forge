@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { SurveyType } from '@/types/survey';
+import { createClient } from '@/utils/supabase/client';
 
 interface SavedSurvey {
     id: string;
@@ -38,6 +39,18 @@ export function SurveyProvider({ children }: { children: React.ReactNode }) {
 
     const fetchSurveys = useCallback(async () => {
         if (surveysLoaded) return; // Don't fetch if we already have the list
+
+        // Check authentication status first using getUser instead of getSession
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+            // User is not authenticated, set empty surveys and mark as loaded
+            setSavedSurveys([]);
+            setSurveysLoaded(true);
+            return;
+        }
+
         try {
             const response = await fetch('/api/survey/list');
             if (!response.ok) {
