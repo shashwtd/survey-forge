@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Instrument_Sans } from "next/font/google";
 import "./globals.css";
+import "@/utils/promisePolyfill";
 import { SurveyProvider } from "@/context/SurveyContext";
 
 import Footer from "@/components/Footer";

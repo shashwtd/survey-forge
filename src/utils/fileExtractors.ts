@@ -1,16 +1,23 @@
 import mammoth from 'mammoth';
 import pdfToText from "react-pdftotext";
+import '@/utils/promisePolyfill';
 
 export async function extractFileContent(file: File): Promise<string> {
     const buffer = await file.arrayBuffer();
 
     if (file.type === 'application/pdf') {
         try {
-            const text = await pdfToText(file);
-            return text;
+            // Wrap PDF extraction in error boundary
+            const text = await Promise.race([
+                pdfToText(file),
+                new Promise<string>((_, reject) => 
+                    setTimeout(() => reject(new Error('PDF extraction timeout')), 30000)
+                )
+            ]);
+            return text || 'No text content extracted from PDF';
         } catch (error) {
             console.error('Error extracting PDF text:', error);
-            throw new Error('Failed to extract text from PDF');
+            throw new Error('Failed to extract text from PDF. Please ensure the PDF contains extractable text.');
         }
     }
     
