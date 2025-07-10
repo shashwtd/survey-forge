@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { LucideLogIn, Trophy } from "lucide-react";
@@ -8,6 +8,8 @@ import Header from "@/components/Header";
 import gsap from "gsap";
 import { SlowMo, ScrollTrigger, SplitText } from "gsap/all";
 import Lenis from "@studio-freight/lenis";
+import { createClient } from "@/utils/supabase/client";
+
 
 gsap.registerPlugin(SlowMo, ScrollTrigger, SplitText);
 
@@ -193,6 +195,7 @@ const FeatureCard = ({
 };
 
 export default function Home() {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const heroRef = useRef<HTMLDivElement>(null);
     const titleRef = useRef<HTMLDivElement>(null);
     const subtitleRef = useRef<HTMLDivElement>(null);
@@ -200,6 +203,24 @@ export default function Home() {
     const buttonsRef = useRef<HTMLDivElement>(null);
     const surveyPreviewRef = useRef<HTMLDivElement>(null);
     const statsRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const supabase = createClient();
+        
+        // Check initial auth state
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setIsLoggedIn(!!session);
+        });
+
+        // Listen for auth changes
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            setIsLoggedIn(!!session);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
 
     useEffect(() => {
         const lenis = new Lenis({
@@ -387,51 +408,88 @@ export default function Home() {
                             ref={descriptionRef}
                             className="text-[22px] text-white/60 font-sans max-w-[650px] mt-8 text-center"
                         >
-                            Survey Forge helps generation of surveys with AI. It
-                            promises ideal questions, contentful connections and
-                            ease of use
+                            Survey Forge helps generation of surveys with AI. It promises ideal questions, contentful connections and ease of use
                         </h4>
 
                         <div
                             ref={buttonsRef}
                             className="flex flex-col md:flex-row gap-4 md:gap-8 items-center justify-center mt-12"
                         >
-                            <Link
-                                href="/login"
-                                className="group flex backdrop-blur-sm rounded-full items-center justify-center gap-3 px-6 py-2 scale-y-[0.99] bg-white/5 hover:bg-white/10 text-white/80 hover:text-white/90 text-xl font-medium border border-white/15 transition-all duration-300 relative overflow-hidden"
-                            >
-                                <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
-                                <LucideLogIn
-                                    size={18}
-                                    className="mt-0.5 opacity-75 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300"
-                                />
-                                <span className="relative">Sign in</span>
-                            </Link>
-                            <Link
-                                href="/survey/create"
-                                className="group rounded-full cursor-pointer flex items-center justify-center gap-3 px-6 pb-2.5 pt-2 text-white text-xl font-medium shadow-lg border border-indigo-600/20 transition-all duration-300 relative overflow-hidden"
-                                style={{
-                                    background:
-                                        "linear-gradient(to right, #4f5db8, #2a3292)",
-                                }}
-                            >
-                                <span className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-400/40 to-indigo-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
-                                Create Survey
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    className="size-5 group-hover:translate-x-1.5 mt-1 delay-300 duration-200"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke="#fff"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M5 12h14m0 0-6-6m6 6-6 6"
-                                    />
-                                </svg>
-                            </Link>
+                            {isLoggedIn ? (
+                                <>
+                                    <Link
+                                        href="/survey/create"
+                                        className="group rounded-full cursor-pointer flex items-center justify-center gap-3 px-8 pb-2.5 pt-2 text-white text-xl font-medium shadow-lg border border-indigo-600/20 transition-all duration-300 relative overflow-hidden"
+                                        style={{
+                                            background:
+                                                "linear-gradient(to right, #4f5db8, #2a3292)",
+                                        }}
+                                    >
+                                        <span className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-400/40 to-indigo-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
+                                        Create New Survey
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            className="size-5 group-hover:translate-x-1.5 mt-1 delay-300 duration-200"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke="#fff"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth="2"
+                                                d="M5 12h14m0 0-6-6m6 6-6 6"
+                                            />
+                                        </svg>
+                                    </Link>
+                                    <Link
+                                        href="/survey"
+                                        className="group flex backdrop-blur-sm rounded-full items-center justify-center gap-3 px-6 py-2 scale-y-[0.99] bg-white/5 hover:bg-white/10 text-white/80 hover:text-white/90 text-xl font-medium border border-white/15 transition-all duration-300 relative overflow-hidden"
+                                    >
+                                        <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
+                                        View My Surveys
+                                    </Link>
+                                </>
+                            ) : (
+                                <>
+                                    <Link
+                                        href="/login"
+                                        className="group flex backdrop-blur-sm rounded-full items-center justify-center gap-3 px-6 py-2 scale-y-[0.99] bg-white/5 hover:bg-white/10 text-white/80 hover:text-white/90 text-xl font-medium border border-white/15 transition-all duration-300 relative overflow-hidden"
+                                    >
+                                        <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
+                                        <LucideLogIn
+                                            size={18}
+                                            className="mt-0.5 opacity-75 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300"
+                                        />
+                                        <span className="relative">Sign in</span>
+                                    </Link>
+                                    <Link
+                                        href="/survey/create"
+                                        className="group rounded-full cursor-pointer flex items-center justify-center gap-3 px-6 pb-2.5 pt-2 text-white text-xl font-medium shadow-lg border border-indigo-600/20 transition-all duration-300 relative overflow-hidden"
+                                        style={{
+                                            background:
+                                                "linear-gradient(to right, #4f5db8, #2a3292)",
+                                        }}
+                                    >
+                                        <span className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-400/40 to-indigo-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
+                                        Create Survey
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            className="size-5 group-hover:translate-x-1.5 mt-1 delay-300 duration-200"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke="#fff"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth="2"
+                                                d="M5 12h14m0 0-6-6m6 6-6 6"
+                                            />
+                                        </svg>
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
                 </section>
